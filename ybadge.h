@@ -5,9 +5,12 @@
 
 #include "Arduino.h"
 
+#include "example_programs/example_programs.h"
+
 /*
-*  The following constants are used to configure the pins on the YBadge and should not be used in your code.
-*/
+ *  The following constants are used to configure the pins on the YBadge and
+ * should not be used in your code.
+ */
 #define TONE_PIN 33
 #define KNOB_PIN 14
 #define LED_PIN 5
@@ -21,74 +24,82 @@
 ////////////////////////////// LEDs ///////////////////////////////////////////
 
 /*
-*  This function is only used behind the scenes to configure the LEDs and should not be used in your code.
-*/
+ *  This function is only used behind the scenes to configure the LEDs and
+ * should not be used in your code.
+ */
 void leds_init();
 
 /*
-*  This function sets the brightness of all of the LEDs. 
-*  The brightness is specified as an integer between 0 (off) and 255 (full brightness).
-*  The void return type means that this function does not return a value.
-*/
+ *  This function sets the brightness of all of the LEDs.
+ *  The brightness is specified as an integer between 0 (off) and 255 (full
+ * brightness). The void return type means that this function does not return a
+ * value.
+ */
 void leds_set_brightness(uint8_t brightness);
 
 /*
-*  This function sets the color of a single LED.
-*  The index is an integer between 1 and 20, representing the number of the target LED (for example, 1 corresponds to LED 1 on the board).
-*  The red, green, and blue values are integers between 0 (off) and 255 (full brightness).
-*  The void return type means that this function does not return a value.
-*/
+ *  This function sets the color of a single LED.
+ *  The index is an integer between 1 and 20, representing the number of the
+ * target LED (for example, 1 corresponds to LED 1 on the board). The red,
+ * green, and blue values are integers between 0 (off) and 255 (full
+ * brightness). The void return type means that this function does not return a
+ * value.
+ */
 void leds_set_color(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
-
 
 ////////////////////////////// Switches/Buttons ///////////////////////////////
 
 /*
-*  This function returns the state of a switch.
-*  The switch_idx is an integer between 1 and 2, representing the number of the target switch (for example, 1 corresponds to switch 1 on the board).
-*  The bool return type means that this function returns a boolean value (true or false).
-*  True corresponds to the switch being on, and false corresponds to the switch being off.
-*/
+ *  This function returns the state of a switch.
+ *  The switch_idx is an integer between 1 and 2, representing the number of the
+ * target switch (for example, 1 corresponds to switch 1 on the board). The bool
+ * return type means that this function returns a boolean value (true or false).
+ *  True corresponds to the switch being on, and false corresponds to the switch
+ * being off.
+ */
 bool switches_get(uint8_t switch_idx);
 
 /*
-*  This function returns the state of a button.
-*  The button_idx is an integer between 1 and 3, representing the number of the target button (for example, 1 corresponds to button 1 on the board).
-*  The bool return type means that this function returns a boolean value (true or false).
-*  True corresponds to the button being pressed, and false corresponds to the button being released.
-*/
+ *  This function returns the state of a button.
+ *  The button_idx is an integer between 1 and 3, representing the number of the
+ * target button (for example, 1 corresponds to button 1 on the board). The bool
+ * return type means that this function returns a boolean value (true or false).
+ *  True corresponds to the button being pressed, and false corresponds to the
+ * button being released.
+ */
 bool buttons_get(uint8_t button_idx);
 
 /*
-*  This function returns the position of the knob.
-*  The int return type means that this function returns an integer value.
-*  The value returned is between 0 and 100, representing the position of the knob (0 is fully counter-clockwise, 100 is fully clockwise).
-*/
+ *  This function returns the position of the knob.
+ *  The int return type means that this function returns an integer value.
+ *  The value returned is between 0 and 100, representing the position of the
+ * knob (0 is fully counter-clockwise, 100 is fully clockwise).
+ */
 int knob_get();
-
 
 ////////////////////////////// Timer Interrupt ////////////////////////////////
 
 /*
-*  This function is only used behind the scenes to configure the timer interrupt and should not be used in your code.
-*/
+ *  This function is only used behind the scenes to configure the timer
+ * interrupt and should not be used in your code.
+ */
 void timer_init();
-
 
 ////////////////////////////// Speaker/Tones //////////////////////////////////
 
 /*
-*  This function plays a tone on the speaker.
-*  The freq is an integer between 31 and 1174, representing the frequency of the tone in Hz.
-*  The duration is an integer representing the duration of the tone in milliseconds.
-*  The void return type means that this function does not return a value.
-*/
+ *  This function plays a tone on the speaker.
+ *  The freq is an integer between 31 and 1174, representing the frequency of
+ * the tone in Hz. The duration is an integer representing the duration of the
+ * tone in milliseconds. The void return type means that this function does not
+ * return a value.
+ */
 void speaker_play_note(unsigned int freq, unsigned long duration);
 
-
 /*
-*  These constant values are used to specify the frequency of a note to be played on the speaker.
-*/
+ *  These constant values are used to specify the frequency of a note to be
+ * played on the speaker.
+ */
 #define NOTE_B0 31
 #define NOTE_C1 33
 #define NOTE_CS1 35
