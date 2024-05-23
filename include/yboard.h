@@ -19,6 +19,8 @@
 #define BUTTON2_PIN 12
 #define BUTTON3_PIN 13
 
+void yboard_init();
+
 ////////////////////////////// LEDs ///////////////////////////////////////////
 
 /*
@@ -55,6 +57,8 @@ void leds_set_color_all(uint8_t red, uint8_t green, uint8_t blue);
 
 ////////////////////////////// Switches/Buttons ///////////////////////////////
 
+void switches_init();
+
 /*
  *  This function returns the state of a switch.
  *  The switch_idx is an integer between 1 and 2, representing the number of the
@@ -64,6 +68,8 @@ void leds_set_color_all(uint8_t red, uint8_t green, uint8_t blue);
  * being off.
  */
 bool switches_get(uint8_t switch_idx);
+
+void buttons_init();
 
 /*
  *  This function returns the state of a button.

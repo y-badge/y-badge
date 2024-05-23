@@ -2,6 +2,13 @@
 
 #include <Adafruit_NeoPixel.h>
 
+void yboard_init() {
+    leds_init();
+    switches_init();
+    buttons_init();
+    timer_init();
+}
+
 ////////////////////////////// LEDs ///////////////////////////////////////////
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -27,6 +34,11 @@ void leds_set_color_all(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 ////////////////////////////// Switches/Buttons ///////////////////////////////
+void switches_init() {
+    pinMode(SWITCH1_PIN, INPUT);
+    pinMode(SWITCH2_PIN, INPUT);
+}
+
 bool switches_get(uint8_t switch_idx) {
     switch (switch_idx) {
     case 1:
@@ -36,6 +48,11 @@ bool switches_get(uint8_t switch_idx) {
     default:
         return false;
     }
+}
+
+void buttons_init() {
+    pinMode(BUTTON1_PIN, INPUT);
+    pinMode(BUTTON2_PIN, INPUT);
 }
 
 bool buttons_get(uint8_t button_idx) {
