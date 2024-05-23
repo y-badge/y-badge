@@ -45,6 +45,14 @@ void leds_set_brightness(uint8_t brightness);
  */
 void leds_set_color(uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
 
+/*
+ *  This function sets the color of all the LEDs on the board.
+ *  The red, green, and blue values are integers between 0 (off) and 255 (full
+ * brightness). The void return type means that this function does not return a
+ * value.
+ */
+void leds_set_color_all(uint8_t red, uint8_t green, uint8_t blue);
+
 ////////////////////////////// Switches/Buttons ///////////////////////////////
 
 /*
