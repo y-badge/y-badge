@@ -5,8 +5,6 @@
 
 #include "Arduino.h"
 
-#include "example_programs/example_programs.h"
-
 /*
  *  The following constants are used to configure the pins on the YBadge and
  * should not be used in your code.
