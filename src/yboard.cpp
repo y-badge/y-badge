@@ -1,4 +1,4 @@
-#include "ybadge.h"
+#include "yboard.h"
 
 #include <Adafruit_NeoPixel.h>
 
