@@ -1,23 +1,8 @@
-# Code Library for the Y-Badge
-This code should be included as a subtree in the main project repository. Place it in the `src` directory of the main project repository.
+# Code Library for the Y-Board
 
-Before working with this repository as a subtree, you should add a remote to your main project repository. This will allow you to pull and push changes to the subtree.
+This code is published on the Platform IO Library Manager. You can find it [here](https://platformio.org/lib/show/). To import it to your project, add the following line to your `platformio.ini` file:
 
-```bash
-git remote add lib-y-badge git@github.com:y-badge/lib-y-badge.git
-```
-
-## To add the subtree
-```bash
-git subtree add --prefix src/lib-y-badge lib-y-badge main
-```
-
-## To update the subtree
-```bash
-git subtree pull --prefix src/lib-y-badge lib-y-badge main
-```
-
-## To push changes to the subtree
-```bash
-git subtree push --prefix src/lib-y-badge lib-y-badge main
+```ini
+lib_deps = 
+    y-board/Y-Board
 ```

@@ -1,11 +1,11 @@
 {
-    "name": "Y-Badge",
+    "name": "Y-Board",
     "version": "1.0.0",
-    "description": "A library for interacting with version 2 and 3 of the Y-Badge hardware",
-    "keywords": "education, y-badge",
+    "description": "A library for interacting with version 2 and 3 of the Y-Board hardware",
+    "keywords": "education, y-board",
     "repository": {
         "type": "git",
-        "url": "https://github.com/y-badge/lib-y-badge.git"
+        "url": "https://github.com/y-board/y-board.git"
     },
     "authors": [
         {
@@ -21,7 +21,7 @@
         }
     ],
     "license": "MIT",
-    "homepage": "https://y-badge.github.io",
+    "homepage": "https://y-board.github.io",
     "dependencies": {
         "adafruit/Adafruit NeoPixel": "^1.12.2"
     },
