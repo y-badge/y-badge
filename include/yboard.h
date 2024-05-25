@@ -4,8 +4,6 @@
 #include <Adafruit_NeoPixel.h>
 #include <stdint.h>
 
-#include "Arduino.h"
-
 class YBoard {
   public:
     YBoard(int led_pin, int led_count, int knob_pin);

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "Arduino.h"
 #include "yboard.h"
 
 class YBoardV2 : public YBoard {
