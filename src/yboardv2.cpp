@@ -1,10 +1,10 @@
 #include "yboardv2.h"
 
-YBoardv2::YBoardv2() : YBoard(5, 20, 14) {}
+YBoardV2::YBoardV2() : YBoard(5, 20, 14) {}
 
-YBoardv2::~YBoardv2() {}
+YBoardV2::~YBoardV2() {}
 
-void YBoardv2::setup() {
+void YBoardV2::setup() {
     YBoard::setup();
 
     setup_switches();
@@ -12,15 +12,15 @@ void YBoardv2::setup() {
     setup_timer();
 }
 
-YBoard::BoardType YBoardv2::get_type() { return BoardType::v2; }
+YBoard::BoardType YBoardV2::get_type() { return BoardType::v2; }
 
 ////////////////////////////// Switches ///////////////////////////////
-void YBoardv2::setup_switches() {
+void YBoardV2::setup_switches() {
     pinMode(this->switch1_pin, INPUT);
     pinMode(this->switch2_pin, INPUT);
 }
 
-bool YBoardv2::get_switch(uint8_t switch_idx) {
+bool YBoardV2::get_switch(uint8_t switch_idx) {
     switch (switch_idx) {
     case 1:
         return !digitalRead(this->switch1_pin);
@@ -32,13 +32,13 @@ bool YBoardv2::get_switch(uint8_t switch_idx) {
 }
 
 ////////////////////////////// Buttons ///////////////////////////////
-void YBoardv2::setup_buttons() {
+void YBoardV2::setup_buttons() {
     pinMode(this->button1_pin, INPUT);
     pinMode(this->button2_pin, INPUT);
     pinMode(this->button3_pin, INPUT);
 }
 
-bool YBoardv2::get_button(uint8_t button_idx) {
+bool YBoardV2::get_button(uint8_t button_idx) {
     switch (button_idx) {
     case 1:
         return !digitalRead(this->button1_pin);
@@ -52,7 +52,7 @@ bool YBoardv2::get_button(uint8_t button_idx) {
 }
 
 ////////////////////////////// Interrupt /////////////////////////////////////
-void YBoardv2::setup_timer() {
+void YBoardV2::setup_timer() {
     // Prescaler = 80, So timer clock = 80MHZ/80 = 1MHz = 1us period
     interrupt_timer = timerBegin(0, 80, true);
 
@@ -63,6 +63,6 @@ void YBoardv2::setup_timer() {
 }
 
 ////////////////////////////// Speaker/Tones /////////////////////////////////////
-void YBoardv2::play_note(unsigned int freq, unsigned long duration) {
+void YBoardV2::play_note(unsigned int freq, unsigned long duration) {
     tone(this->tone_pin, freq, duration);
 }

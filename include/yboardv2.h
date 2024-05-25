@@ -6,10 +6,10 @@
 #include "Arduino.h"
 #include "yboard.h"
 
-class YBoardv2 : public YBoard {
+class YBoardV2 : public YBoard {
   public:
-    YBoardv2();
-    virtual ~YBoardv2();
+    YBoardV2();
+    virtual ~YBoardV2();
 
     void setup() override;
 
