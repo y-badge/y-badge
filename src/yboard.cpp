@@ -1,95 +1,40 @@
 #include "yboard.h"
 
-#include <Adafruit_NeoPixel.h>
+YBoard::YBoard(int led_pin, int led_count, int knob_pin)
+    : led_pin(led_pin), led_count(led_count), knob_pin(knob_pin),
+      strip(YBoard::led_count, YBoard::led_pin, NEO_GRB + NEO_KHZ800) {}
 
-void yboard_init() {
-    leds_init();
-    switches_init();
-    buttons_init();
-    timer_init();
+YBoard::~YBoard() {}
+
+void YBoard::setup() {
+    // Initialize the board
+    setup_leds();
+    // setup_timer();
 }
 
-////////////////////////////// LEDs ///////////////////////////////////////////
-
-Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-
-void leds_init() {
-    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+void YBoard::setup_leds() {
+    strip.begin();
     strip.clear();
-    leds_set_brightness(50);
+    set_led_brightness(50);
 }
 
-void leds_set_brightness(uint8_t brightness) { strip.setBrightness(brightness); }
-
-void leds_set_color(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
-    strip.setPixelColor(index - 1, red, green, blue);
+void YBoard::set_led_color(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
+    strip.setPixelColor(index, red, green, blue);
     strip.show();
 }
 
-void leds_set_color_all(uint8_t red, uint8_t green, uint8_t blue) {
-    for (int i = 0; i < LED_COUNT; i++) {
+void YBoard::set_led_brightness(uint8_t brightness) { strip.setBrightness(brightness); }
+
+void YBoard::set_all_leds_color(uint8_t red, uint8_t green, uint8_t blue) {
+    for (int i = 0; i < this->led_count; i++) {
         strip.setPixelColor(i, red, green, blue);
     }
     strip.show();
 }
 
-////////////////////////////// Switches/Buttons ///////////////////////////////
-void switches_init() {
-    pinMode(SWITCH1_PIN, INPUT);
-    pinMode(SWITCH2_PIN, INPUT);
-}
+uint16_t YBoard::get_led_count() { return this->led_count; }
 
-bool switches_get(uint8_t switch_idx) {
-    switch (switch_idx) {
-    case 1:
-        return !digitalRead(SWITCH1_PIN);
-    case 2:
-        return !digitalRead(SWITCH2_PIN);
-    default:
-        return false;
-    }
-}
-
-void buttons_init() {
-    pinMode(BUTTON1_PIN, INPUT);
-    pinMode(BUTTON2_PIN, INPUT);
-}
-
-bool buttons_get(uint8_t button_idx) {
-    switch (button_idx) {
-    case 1:
-        return !digitalRead(BUTTON1_PIN);
-    case 2:
-        return !digitalRead(BUTTON2_PIN);
-    case 3:
-        return !digitalRead(BUTTON3_PIN);
-    default:
-        return false;
-    }
-}
-
-int knob_get() {
+int YBoard::get_knob() {
     // Map value from 0 to 100
-    return map(analogRead(KNOB_PIN), 0, 4095, 0, 100);
-}
-
-////////////////////////////// Timer Interrupt ///////////////////////////////////
-
-hw_timer_t *interrupt_timer = NULL;
-
-void timer_isr() {}
-void timer_init() {
-    // Prescaler = 80, So timer clock = 80MHZ/80 = 1MHz = 1us period
-    interrupt_timer = timerBegin(0, 80, true);
-
-    timerAttachInterrupt(interrupt_timer, &timer_isr, true);
-
-    // Alarm runs every 10 cycles.  1us * 10 = 100us period
-    timerAlarmWrite(interrupt_timer, 100, true);
-}
-
-////////////////////////////// Speaker/Tones /////////////////////////////////////
-
-void speaker_play_note(unsigned int freq, unsigned long duration) {
-    tone(TONE_PIN, freq, duration);
+    return map(analogRead(this->knob_pin), 0, 4095, 0, 100);
 }
