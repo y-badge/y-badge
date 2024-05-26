@@ -35,6 +35,8 @@ class YBoardV2 : public YBoard {
      */
     bool get_button(uint8_t button_idx) override;
 
+    int get_knob() override;
+
     ////////////////////////////// Speaker/Tones //////////////////////////////////
 
     /*

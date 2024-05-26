@@ -51,6 +51,14 @@ bool YBoardV2::get_button(uint8_t button_idx) {
     }
 }
 
+////////////////////////////// Knob ///////////////////////////////
+int YBoardV2::get_knob() {
+    int value = map(analogRead(this->knob_pin), 0, 4095, 0, 100);
+    value = max(0, value);
+    value = min(100, value);
+    return value;
+}
+
 ////////////////////////////// Interrupt /////////////////////////////////////
 void YBoardV2::setup_timer() {
     // Prescaler = 80, So timer clock = 80MHZ/80 = 1MHz = 1us period

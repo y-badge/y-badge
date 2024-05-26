@@ -72,7 +72,7 @@ class YBoard {
      *  The value returned is between 0 and 100, representing the position of the
      * knob (0 is fully counter-clockwise, 100 is fully clockwise).
      */
-    int get_knob();
+    virtual int get_knob() = 0;
 
   protected:
     const int led_count;

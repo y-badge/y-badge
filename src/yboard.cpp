@@ -33,8 +33,3 @@ void YBoard::set_all_leds_color(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 uint16_t YBoard::get_led_count() { return this->led_count; }
-
-int YBoard::get_knob() {
-    // Map value from 0 to 100
-    return map(analogRead(this->knob_pin), 0, 4095, 0, 100);
-}

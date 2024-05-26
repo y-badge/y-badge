@@ -48,6 +48,13 @@ bool YBoardV3::get_button(uint8_t button_idx) {
     }
 }
 
+////////////////////////////// Knob ///////////////////////////////
+int YBoardV3::get_knob() {
+    int value = map(analogRead(this->knob_pin), 2888, 8, 0, 100);
+    value = max(0, value);
+    value = min(100, value);
+    return value;
+}
 
 ////////////////////////////// Speaker/Tones //////////////////////////////////
 void YBoardV3::setup_speaker() {
