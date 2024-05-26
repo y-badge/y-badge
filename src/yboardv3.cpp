@@ -10,6 +10,8 @@ void YBoardV3::setup() {
     setup_switches();
     setup_buttons();
     setup_speaker();
+    setup_accelerometer();
+    setup_temperature();
 }
 
 YBoard::BoardType YBoardV3::get_type() { return BoardType::v3; }
@@ -85,3 +87,45 @@ void YBoardV3::loop_speaker() { audio.loop(); }
 void YBoardV3::play_song_from_sd(const char *filename) { audio.connecttoFS(SD, filename); }
 
 void YBoardV3::set_speaker_volume(uint8_t volume) { audio.setVolume(volume); }
+
+////////////////////////////// Accelerometer /////////////////////////////////////
+void YBoardV3::setup_accelerometer() {
+    if (!wire_begin) {
+        Wire.begin(sda_pin, scl_pin);
+        wire_begin = true;
+    }
+
+    if (!accel.begin(accel_addr, Wire)) {
+        Serial.println("WARNING: Accelerometer not detected.");
+    }
+}
+
+void YBoardV3::get_accelerometer(float *accelX, float *accelY, float *accelZ) {
+    if (accel.available()) {
+        *accelX = accel.getX();
+        *accelY = accel.getY();
+        *accelZ = accel.getZ();
+    } else {
+        Serial.println("WARNING: Accelerometer data not available.");
+    }
+}
+
+// ////////////////////////////// Temperature /////////////////////////////////////
+void YBoardV3::setup_temperature() {
+    if (!wire_begin) {
+        Wire.begin(sda_pin, scl_pin);
+        wire_begin = true;
+    }
+
+    if (!aht.begin(&Wire)) {
+        Serial.println("WARNING: Could not find temperature sensor.");
+    }
+}
+
+void YBoardV3::get_temperature(float *temperature, float *humidity) {
+    sensors_event_t h, t;
+    aht.getEvent(&h, &t);
+
+    *temperature = t.temperature;
+    *humidity = h.relative_humidity;
+}

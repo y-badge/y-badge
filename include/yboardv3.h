@@ -1,12 +1,14 @@
 #ifndef YBOARDV3_H
 #define YBOARDV3_H
 
+#include "yboard.h"
+
+#include <Adafruit_AHTX0.h>
 #include <Audio.h>
 #include <FS.h>
 #include <SD.h>
+#include <SparkFun_LIS2DH12.h>
 #include <stdint.h>
-
-#include "yboard.h"
 
 class YBoardV3 : public YBoard {
   public:
@@ -47,11 +49,24 @@ class YBoardV3 : public YBoard {
 
     void set_speaker_volume(uint8_t volume);
 
+    ////////////////////////////// Accelerometer /////////////////////////////////////
+    void get_accelerometer(float *accelX, float *accelY, float *accelZ);
+
+    // ////////////////////////////// Temperature /////////////////////////////////////
+    void get_temperature(float *temperature, float *humidity);
+
   protected:
     const int switch1_pin = 16;
     const int switch2_pin = 18;
     const int button1_pin = 17;
     const int button2_pin = 7;
+
+    // I2C Connections
+    const int sda_pin = 2;
+    const int scl_pin = 1;
+
+    // I2C Devices
+    const int accel_addr = 0x19;
 
     // microSD Card Reader connections
     const int sd_cs_pin = 10;
@@ -66,10 +81,15 @@ class YBoardV3 : public YBoard {
 
   private:
     Audio audio;
+    SPARKFUN_LIS2DH12 accel;
+    Adafruit_AHTX0 aht;
+    bool wire_begin = false;
 
     void setup_switches();
     void setup_buttons();
     void setup_speaker();
+    void setup_accelerometer();
+    void setup_temperature();
 };
 
 #endif /* YBOARDV3_H */
