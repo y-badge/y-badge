@@ -25,9 +25,9 @@ void YBoardV3::setup_switches() {
 bool YBoardV3::get_switch(uint8_t switch_idx) {
     switch (switch_idx) {
     case 1:
-        return !digitalRead(this->switch1_pin);
+        return digitalRead(this->switch1_pin);
     case 2:
-        return !digitalRead(this->switch2_pin);
+        return digitalRead(this->switch2_pin);
     default:
         return false;
     }
