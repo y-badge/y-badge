@@ -23,7 +23,8 @@
     "license": "MIT",
     "homepage": "https://y-board.github.io",
     "dependencies": {
-        "adafruit/Adafruit NeoPixel": "^1.12.2"
+        "adafruit/Adafruit NeoPixel": "^1.12.2",
+        "ESP32-audioI2S": "https://github.com/schreibfaul1/ESP32-audioI2S.git#3.0.8"
     },
     "frameworks": [
         "arduino"
