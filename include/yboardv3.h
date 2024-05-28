@@ -1,7 +1,7 @@
 #ifndef YBOARDV3_H
 #define YBOARDV3_H
 
-#include "yboard.h"
+#include "yboard_base.h"
 
 #include <Adafruit_AHTX0.h>
 #include <Audio.h>
@@ -10,7 +10,7 @@
 #include <SparkFun_LIS2DH12.h>
 #include <stdint.h>
 
-class YBoardV3 : public YBoard {
+class YBoardV3 : public YBoardBase {
   public:
     YBoardV3();
     virtual ~YBoardV3();

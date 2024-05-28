@@ -1,18 +1,18 @@
 #include "yboardv2.h"
 
-YBoardV2::YBoardV2() : YBoard(5, 20, 14) {}
+YBoardV2::YBoardV2() : YBoardBase(5, 20, 14) {}
 
 YBoardV2::~YBoardV2() {}
 
 void YBoardV2::setup() {
-    YBoard::setup();
+    YBoardBase::setup();
 
     setup_switches();
     setup_buttons();
     setup_timer();
 }
 
-YBoard::BoardType YBoardV2::get_type() { return BoardType::v2; }
+YBoardBase::BoardType YBoardV2::get_type() { return BoardType::v2; }
 
 ////////////////////////////// Switches ///////////////////////////////
 void YBoardV2::setup_switches() {

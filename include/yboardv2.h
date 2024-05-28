@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include "yboard.h"
+#include "yboard_base.h"
 
-class YBoardV2 : public YBoard {
+class YBoardV2 : public YBoardBase {
   public:
     YBoardV2();
     virtual ~YBoardV2();

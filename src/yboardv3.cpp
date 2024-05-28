@@ -1,11 +1,11 @@
 #include "yboardv3.h"
 
-YBoardV3::YBoardV3() : YBoard(5, 20, 9) {}
+YBoardV3::YBoardV3() : YBoardBase(5, 20, 9) {}
 
 YBoardV3::~YBoardV3() {}
 
 void YBoardV3::setup() {
-    YBoard::setup();
+    YBoardBase::setup();
 
     setup_switches();
     setup_buttons();
@@ -14,7 +14,7 @@ void YBoardV3::setup() {
     setup_temperature();
 }
 
-YBoard::BoardType YBoardV3::get_type() { return BoardType::v3; }
+YBoardBase::BoardType YBoardV3::get_type() { return BoardType::v3; }
 
 ////////////////////////////// Switches ///////////////////////////////
 void YBoardV3::setup_switches() {

@@ -1,31 +1,10 @@
 #include "yboard.h"
 
-YBoard::YBoard(int led_pin, int led_count, int knob_pin)
-    : led_pin(led_pin), led_count(led_count), knob_pin(knob_pin),
-      strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
-
-YBoard::~YBoard() {}
-
-void YBoard::setup() { setup_leds(); }
-
-void YBoard::setup_leds() {
-    strip.begin();
-    strip.clear();
-    set_led_brightness(50);
-}
-
-void YBoard::set_led_color(uint16_t index, uint8_t red, uint8_t green, uint8_t blue) {
-    strip.setPixelColor(index, red, green, blue);
-    strip.show();
-}
-
-void YBoard::set_led_brightness(uint8_t brightness) { strip.setBrightness(brightness); }
-
-void YBoard::set_all_leds_color(uint8_t red, uint8_t green, uint8_t blue) {
-    for (int i = 0; i < this->led_count; i++) {
-        strip.setPixelColor(i, red, green, blue);
-    }
-    strip.show();
-}
-
-uint16_t YBoard::get_led_count() { return this->led_count; }
+#if defined(YBOARDV2)
+YBoardV2 Yboard;
+#elif defined(YBOARDV3)
+YBoardV3 Yboard;
+#else
+static_assert(false,
+              "No YBoard defined. Please define YBOARDV2 or YBOARDV3 in your platformio.ini file.");
+#endif
