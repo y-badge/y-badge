@@ -2,15 +2,11 @@
 
 YBoard::YBoard(int led_pin, int led_count, int knob_pin)
     : led_pin(led_pin), led_count(led_count), knob_pin(knob_pin),
-      strip(YBoard::led_count, YBoard::led_pin, NEO_GRB + NEO_KHZ800) {}
+      strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
 
 YBoard::~YBoard() {}
 
-void YBoard::setup() {
-    // Initialize the board
-    setup_leds();
-    // setup_timer();
-}
+void YBoard::setup() { setup_leds(); }
 
 void YBoard::setup_leds() {
     strip.begin();

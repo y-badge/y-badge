@@ -85,4 +85,14 @@ class YBoard {
     void setup_leds();
 };
 
+#if defined(YBOARDV2)
+#include "yboardv2.h"
+extern YBoardV2 yboard;
+#elif defined(YBOARDV3)
+#include "yboardv3.h"
+extern YBoardV3 yboard;
+#else
+#error "No board defined"
+#endif
+
 #endif /* YBOARD_H */
