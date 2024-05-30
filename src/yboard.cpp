@@ -120,14 +120,14 @@ void YBoardV3::setup_accelerometer() {
     }
 }
 
-void YBoardV3::get_accelerometer(float *accelX, float *accelY, float *accelZ) {
-    if (accel.available()) {
-        *accelX = accel.getX();
-        *accelY = accel.getY();
-        *accelZ = accel.getZ();
-    } else {
-        Serial.println("WARNING: Accelerometer data not available.");
-    }
+bool YBoardV3::accelerometer_available() { return accel.available(); }
+
+accelerometer_data YBoardV3::get_accelerometer() {
+    accelerometer_data data;
+    data.x = accel.getX();
+    data.y = accel.getY();
+    data.z = accel.getZ();
+    return data;
 }
 
 // ////////////////////////////// Temperature /////////////////////////////////////
@@ -142,10 +142,13 @@ void YBoardV3::setup_temperature() {
     }
 }
 
-void YBoardV3::get_temperature(float *temperature, float *humidity) {
+temperature_data YBoardV3::get_temperature() {
+    temperature_data data;
     sensors_event_t h, t;
     aht.getEvent(&h, &t);
 
-    *temperature = t.temperature;
-    *humidity = h.relative_humidity;
+    data.temperature = t.temperature;
+    data.humidity = h.relative_humidity;
+
+    return data;
 }

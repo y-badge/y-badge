@@ -9,6 +9,17 @@
 #include <SparkFun_LIS2DH12.h>
 #include <stdint.h>
 
+struct accelerometer_data {
+    float x;
+    float y;
+    float z;
+};
+
+struct temperature_data {
+    float temperature;
+    float humidity;
+};
+
 class YBoardV3 {
   public:
     YBoardV3();
@@ -54,10 +65,12 @@ class YBoardV3 {
     void set_speaker_volume(uint8_t volume);
 
     ////////////////////////////// Accelerometer /////////////////////////////////////
-    void get_accelerometer(float *accelX, float *accelY, float *accelZ);
+    bool accelerometer_available();
+
+    accelerometer_data get_accelerometer();
 
     // ////////////////////////////// Temperature /////////////////////////////////////
-    void get_temperature(float *temperature, float *humidity);
+    temperature_data get_temperature();
 
     // LEDs
     static constexpr int led_pin = 5;
