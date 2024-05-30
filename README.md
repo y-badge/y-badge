@@ -4,5 +4,5 @@ This code is published on the Platform IO registry. You can find it [here](https
 
 ```ini
 lib_deps = 
-    y-board/Y-Board
+    y-board/Y-Board v3
 ```
