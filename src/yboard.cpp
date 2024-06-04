@@ -92,21 +92,24 @@ void YBoardV3::setup_speaker() {
         Serial.println("Error accessing microSD card!");
     }
 
-    // Setup I2S
-    audio.setPinout(i2s_bclk_pin, i2s_lrc_pin, i2s_dout_pin);
+    // // Setup I2S
+    // audio.setPinout(i2s_bclk_pin, i2s_lrc_pin, i2s_dout_pin);
 
-    // Make the volume out of 100
-    audio.setVolumeSteps(100);
+    // // Make the volume out of 100
+    // audio.setVolumeSteps(100);
 
-    // Set Volume
-    audio.setVolume(25);
+    // // Set Volume
+    // audio.setVolume(25);
+
+    yaudio.setup();
 }
 
-void YBoardV3::loop_speaker() { audio.loop(); }
+void YBoardV3::loop_speaker() { yaudio.loop(); }
 
-void YBoardV3::play_song_from_sd(const char *filename) { audio.connecttoFS(SD, filename); }
+void YBoardV3::play_song_from_sd(const char *filename) { // audio.connecttoFS(SD, filename);
+}
 
-void YBoardV3::set_speaker_volume(uint8_t volume) { audio.setVolume(volume); }
+void YBoardV3::set_speaker_volume(uint8_t volume) { yaudio.setVolume(volume); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 void YBoardV3::setup_accelerometer() {
