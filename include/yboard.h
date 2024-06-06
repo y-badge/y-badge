@@ -60,7 +60,7 @@ class YBoardV3 {
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     void loop_speaker();
 
-    void play_song_from_sd(const char *filename);
+    bool play_song_from_sd(const char *filename);
 
     void set_speaker_volume(uint8_t volume);
 
@@ -111,9 +111,9 @@ class YBoardV3 {
     void setup_leds();
     void setup_switches();
     void setup_buttons();
-    void setup_speaker();
-    void setup_accelerometer();
-    void setup_temperature();
+    bool setup_speaker();
+    bool setup_accelerometer();
+    bool setup_temperature();
 };
 
 extern YBoardV3 Yboard;

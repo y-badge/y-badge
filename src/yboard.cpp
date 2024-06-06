@@ -79,7 +79,7 @@ int YBoardV3::get_knob() {
 }
 
 ////////////////////////////// Speaker/Tones //////////////////////////////////
-void YBoardV3::setup_speaker() {
+bool YBoardV3::setup_speaker() {
     // Set microSD Card CS as OUTPUT and set HIGH
     pinMode(sd_cs_pin, OUTPUT);
     digitalWrite(sd_cs_pin, HIGH);
@@ -90,6 +90,7 @@ void YBoardV3::setup_speaker() {
     // Start microSD Card
     if (!SD.begin(sd_cs_pin)) {
         Serial.println("Error accessing microSD card!");
+        return false;
     }
 
     // Setup I2S
@@ -100,16 +101,25 @@ void YBoardV3::setup_speaker() {
 
     // Set Volume
     audio.setVolume(25);
+
+    return true;
 }
 
 void YBoardV3::loop_speaker() { audio.loop(); }
 
-void YBoardV3::play_song_from_sd(const char *filename) { audio.connecttoFS(SD, filename); }
+bool YBoardV3::play_song_from_sd(const char *filename) {
+    if (!SD.exists(filename)) {
+        Serial.println("File does not exist.");
+        return false;
+    }
+
+    return audio.connecttoFS(SD, filename);
+}
 
 void YBoardV3::set_speaker_volume(uint8_t volume) { audio.setVolume(volume); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
-void YBoardV3::setup_accelerometer() {
+bool YBoardV3::setup_accelerometer() {
     if (!wire_begin) {
         Wire.begin(sda_pin, scl_pin);
         wire_begin = true;
@@ -117,7 +127,10 @@ void YBoardV3::setup_accelerometer() {
 
     if (!accel.begin(accel_addr, Wire)) {
         Serial.println("WARNING: Accelerometer not detected.");
+        return false;
     }
+
+    return true;
 }
 
 bool YBoardV3::accelerometer_available() { return accel.available(); }
@@ -131,7 +144,7 @@ accelerometer_data YBoardV3::get_accelerometer() {
 }
 
 // ////////////////////////////// Temperature /////////////////////////////////////
-void YBoardV3::setup_temperature() {
+bool YBoardV3::setup_temperature() {
     if (!wire_begin) {
         Wire.begin(sda_pin, scl_pin);
         wire_begin = true;
@@ -139,7 +152,10 @@ void YBoardV3::setup_temperature() {
 
     if (!aht.begin(&Wire)) {
         Serial.println("WARNING: Could not find temperature sensor.");
+        return false;
     }
+
+    return true;
 }
 
 temperature_data YBoardV3::get_temperature() {
