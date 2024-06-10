@@ -7,6 +7,8 @@ YBoardV3::YBoardV3() : strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
 YBoardV3::~YBoardV3() {}
 
 void YBoardV3::setup() {
+    Serial.begin(9600);
+    delay(2000);
     setup_leds();
     setup_switches();
     setup_buttons();
@@ -101,15 +103,17 @@ void YBoardV3::setup_speaker() {
     // // Set Volume
     // audio.setVolume(25);
 
-    yaudio.setup();
+    YAudio::setup();
 }
 
-void YBoardV3::loop_speaker() { yaudio.loop(); }
+void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 void YBoardV3::play_song_from_sd(const char *filename) { // audio.connecttoFS(SD, filename);
 }
 
-void YBoardV3::set_speaker_volume(uint8_t volume) { yaudio.setVolume(volume); }
+void YBoardV3::set_speaker_volume(uint8_t volume) { YAudio::setVolume(volume); }
+
+void YBoardV3::play_notes(std::string notes) { YAudio::add_notes(notes); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 void YBoardV3::setup_accelerometer() {

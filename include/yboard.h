@@ -68,6 +68,8 @@ class YBoardV3 {
 
     void set_speaker_volume(uint8_t volume);
 
+    void play_notes(std::string notes);
+
     ////////////////////////////// Accelerometer
     ////////////////////////////////////////
     bool accelerometer_available();
@@ -109,7 +111,7 @@ class YBoardV3 {
 
   private:
     Adafruit_NeoPixel strip;
-    YAudio yaudio;
+    // YAudio yaudio;
     SPARKFUN_LIS2DH12 accel;
     Adafruit_AHTX0 aht;
     bool wire_begin = false;
