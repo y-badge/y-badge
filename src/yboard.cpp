@@ -7,6 +7,8 @@ YBoardV3::YBoardV3() : strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
 YBoardV3::~YBoardV3() {}
 
 void YBoardV3::setup() {
+    Serial.begin(9600);
+    delay(2000);
     setup_leds();
     setup_switches();
     setup_buttons();
@@ -93,19 +95,15 @@ bool YBoardV3::setup_speaker() {
         return false;
     }
 
-    // Setup I2S
-    audio.setPinout(i2s_bclk_pin, i2s_lrc_pin, i2s_dout_pin);
+    YAudio::setup();
 
-    // Make the volume out of 100
-    audio.setVolumeSteps(100);
-
-    // Set Volume
-    audio.setVolume(25);
+    // // Set Volume
+    YAudio::set_wave_volume(25);
 
     return true;
 }
 
-void YBoardV3::loop_speaker() { audio.loop(); }
+void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_song_from_sd(const char *filename) {
     if (!SD.exists(filename)) {
@@ -113,10 +111,16 @@ bool YBoardV3::play_song_from_sd(const char *filename) {
         return false;
     }
 
-    return audio.connecttoFS(SD, filename);
+    // return audio.connecttoFS(SD, filename);
 }
 
-void YBoardV3::set_speaker_volume(uint8_t volume) { audio.setVolume(volume); }
+void YBoardV3::set_sd_song_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
+
+void YBoardV3::play_notes(std::string notes) { YAudio::add_notes(notes); }
+
+void YBoardV3::stop_audio() { YAudio::stop(); }
+
+bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {

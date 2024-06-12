@@ -1,0 +1,450 @@
+#include "yaudio.h"
+
+// #include <I2S.h>
+#include "driver/i2s.h"
+
+#include <Arduino.h>
+
+namespace YAudio {
+
+///////////////////////////////// Configuration Constants //////////////////////
+i2s_port_t I2S_PORT = I2S_NUM_0;
+
+// The number of bits per sample.
+static const int BITS_PER_SAMPLE = 16;
+static const int BYTES_PER_SAMPLE = BITS_PER_SAMPLE / 8;
+static const int SAMPLE_RATE = 16000; // sample rate in Hz
+
+// The number of frames of valid PCM audio data in the audio buffer. This will be incremented when
+// we add a note to the audio buffer, and decremented when we write a frame to the I2S buffer.
+static int audio_buf_num_populated_frames;
+
+// The audio buffer. This is where we store the PCM audio data that we want to play.
+// This is sized large enough to hold an almost full frame (1023 bytes), plus the next note.
+// The largest note is a whole note at tempo = 40bps, sample rate = 16000,
+// which is 4*(60/40)*16000 = 96000 samples.
+// 96000 samples + 1023 = 97023, which is less than 96 frames (96 * 1024 = 98208)
+static const int FRAME_SIZE = 1024;
+static const int AUDIO_BUF_NUM_FRAMES = 100;
+static int16_t audio_buf[FRAME_SIZE * AUDIO_BUF_NUM_FRAMES];
+
+////////////////////////////// Global Variables ////////////////////////////////
+// This is the index of the next frame to write to the I2S buffer.
+static int audio_buf_frame_idx_to_send;
+
+// This is the index into the audio buffer of the next sample to write to
+static int audio_buf_empty_idx;
+
+// This is the sequence of notes to play
+static std::string notes;
+
+// Notes state
+static int beats_per_minute;
+static int octave;
+static int volume_notes;
+
+// I2S is running?
+static bool i2s_running;
+
+// Next note to play
+static bool next_note_parsed;
+static float next_note_freq;
+static float next_note_duration_s;
+
+// Wave file
+static int volume_wave;
+
+//////////////////////////// Private Function Prototypes ///////////////////////
+// Local private functions
+static void generate_sine_wave(double frequency, int num_samples, double amplitude);
+static void write_next_note_to_audio_buf();
+static void parse_next_note();
+static void set_note_defaults();
+static void start_i2s();
+
+////////////////////////////// Public Functions ///////////////////////////////
+void add_notes(std::string new_notes) {
+    if (!i2s_running) {
+        start_i2s();
+    }
+
+    // Removing ending z
+    if (notes.length() && (notes[notes.size() - 1] == 'z')) {
+        notes = notes.substr(0, notes.size() - 1);
+    }
+
+    notes += new_notes + "z";
+    if (audio_buf_num_populated_frames < 0) {
+        audio_buf_num_populated_frames = 0;
+    }
+}
+
+////////////////////////////// Private Functions ///////////////////////////////
+
+void start_i2s() {
+    if (i2s_running) {
+        return;
+    }
+    i2s_start(I2S_PORT);
+    i2s_running = true;
+}
+
+static void generate_silence(float duration_s) {
+    int num_samples = duration_s * SAMPLE_RATE;
+
+    for (int i = 0; i < num_samples; i++) {
+        int idx = audio_buf_empty_idx ^ 1;
+
+        audio_buf[idx] = 0;
+        audio_buf_empty_idx = (audio_buf_empty_idx + 1) % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
+        if (audio_buf_empty_idx % FRAME_SIZE == 0) {
+            // Serial.println("Frame filled");
+            audio_buf_num_populated_frames++;
+            yield();
+        }
+    }
+}
+
+static void generate_sine_wave(float duration_s, double frequency, double amplitude) {
+    const float FADE_IN_FRAC = 0.02;
+    const float FADE_OUT_FRAC = 0.02;
+    int num_samples = duration_s * SAMPLE_RATE;
+
+    for (int i = 0; i < num_samples; i++) {
+        int16_t val;
+
+        double _amp;
+
+        float frac = i / (double)num_samples;
+        if (frac < FADE_IN_FRAC) {
+            _amp = amplitude * (frac / FADE_IN_FRAC);
+        } else if (frac > 1 - FADE_OUT_FRAC) {
+            _amp = amplitude * (1 - ((frac - (1 - FADE_OUT_FRAC)) / FADE_OUT_FRAC));
+        } else {
+            _amp = amplitude;
+        }
+        val = _amp * sin(2 * 3.14 * frequency * i / SAMPLE_RATE);
+
+        int idx = audio_buf_empty_idx ^ 1;
+        audio_buf[idx] = val;
+
+        // Serial.printf("Wrote %d to index %d\n", audio_buf[idx], idx);
+
+        audio_buf_empty_idx = (audio_buf_empty_idx + 1) % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
+        if (audio_buf_empty_idx % FRAME_SIZE == 0) {
+            audio_buf_num_populated_frames++;
+            yield();
+            // Serial.printf("Writing frame. # populated: %d\n", audio_buf_num_populated_frames);
+        }
+    }
+}
+
+static QueueHandle_t i2s_event_queue;
+int I2S_Q_LEN = 10;
+bool TXdoneEvent = false;
+
+void I2Sout(void *params) {
+    int retv;
+    i2s_event_t i2s_evt;
+    int qCnt;
+
+    while (1) {
+        TXdoneEvent = false;
+        qCnt = 0;
+        do // wait on I2S event queue until a TX_DONE is found
+        {
+            retv = xQueueReceive(
+                i2s_event_queue, &i2s_evt,
+                1); // don't let this block for long, as we check for the queue stalling
+            if ((retv == pdPASS) &&
+                (i2s_evt.type == I2S_EVENT_TX_DONE)) // I2S DMA finish sent 1 buffer
+            {
+                TXdoneEvent = true;
+                qCnt++;
+                break;
+            }
+            vTaskDelay(1); // make sure there's time for some other processing if we need to wait!
+        } while (retv == pdPASS);
+
+        if (TXdoneEvent) {
+            if (audio_buf_num_populated_frames) {
+                size_t bytes_written;
+                i2s_write(I2S_PORT, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
+                          FRAME_SIZE * BYTES_PER_SAMPLE, &bytes_written, portMAX_DELAY);
+
+                audio_buf_frame_idx_to_send =
+                    (audio_buf_frame_idx_to_send + 1) % AUDIO_BUF_NUM_FRAMES;
+            }
+            audio_buf_num_populated_frames--;
+        }
+    }
+}
+
+void set_note_defaults() {
+    beats_per_minute = 120;
+    octave = 5;
+    volume_notes = 5;
+}
+
+void reset_audio_buf() {
+    audio_buf_num_populated_frames = 0;
+    audio_buf_frame_idx_to_send = 0;
+    audio_buf_empty_idx = 0;
+    next_note_parsed = false;
+    notes = "";
+}
+
+void setup() {
+    // Initialize global variables
+    reset_audio_buf();
+    set_note_defaults();
+    i2s_running = false;
+    volume_wave = 5;
+
+    const i2s_config_t i2s_config = {
+        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX), // Receive, not transfer
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, // could only get it to work with 32bits
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
+        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
+
+        .dma_buf_count = 2,
+        .dma_buf_len = 1024,
+        .use_apll = 0};
+
+    const i2s_pin_config_t pin_config = {
+        .bck_io_num = 21, .ws_io_num = 47, .data_out_num = 14, .data_in_num = I2S_PIN_NO_CHANGE};
+
+    int err;
+
+    i2s_driver_install(I2S_PORT, &i2s_config, I2S_Q_LEN, &i2s_event_queue);
+
+    int xret;
+    TaskHandle_t I2StaskHandle;
+    xret = xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, &I2StaskHandle);
+
+    if (err != ESP_OK) {
+        while (true) {
+            Serial.printf("Failed installing driver: %d\n", err);
+        }
+    }
+
+    err = i2s_set_pin(I2S_PORT, &pin_config);
+    if (err != ESP_OK) {
+        Serial.printf("Failed setting pin: %d\n", err);
+        while (true)
+            ;
+    }
+
+    i2s_running = true;
+    Serial.println("I2S setup complete and running");
+}
+
+void write_next_note_to_audio_buf() {
+
+    // Check if we have enough space in the buffer to add the note
+    int avail_space = (AUDIO_BUF_NUM_FRAMES - audio_buf_num_populated_frames) * FRAME_SIZE;
+    int note_samples = next_note_duration_s * SAMPLE_RATE;
+    // The logic below is commented out because it leads to cutting out sometimes.
+    // I have no idea why...
+    // if (avail_space > note_samples) {
+    if (audio_buf_num_populated_frames < 4) {
+
+        int amplitude = 16000 * (volume_notes / 10.0);
+        if (next_note_freq < 800) {
+            amplitude *= 2;
+        } else if (next_note_freq < 1100) {
+            // Perform linear scaling of volume for frequencies between 800 and 1100
+            amplitude = amplitude * (next_note_freq - 800) / 300;
+        }
+
+        if (next_note_freq == 0) {
+            generate_silence(next_note_duration_s);
+        } else {
+            generate_sine_wave(next_note_duration_s, next_note_freq, amplitude);
+        }
+        next_note_parsed = false;
+    } else {
+        Serial.println("Buffer full");
+    }
+}
+
+void parse_next_note() {
+    while (notes.length()) {
+        // If first character is white space, remove it and continue
+        if (isspace(notes[0])) {
+            notes.erase(0, 1);
+            continue;
+        }
+
+        // Octave
+        if (notes[0] == 'O' || notes[0] == 'o') {
+            int new_octave = notes[1] - '0';
+            if (new_octave >= 4 && new_octave <= 7) {
+                octave = new_octave;
+            }
+            notes.erase(0, 2);
+            continue;
+        }
+
+        // Tempo
+        if (notes[0] == 'T' || notes[0] == 't') {
+            notes.erase(0, 1);
+            size_t pos;
+            int new_tempo = std::stoi(notes, &pos);
+            notes = notes.substr(pos);
+            if (new_tempo >= 40 && new_tempo <= 240) {
+                beats_per_minute = new_tempo;
+            }
+            continue;
+        }
+
+        // Reset
+        if (notes[0] == '!') {
+            set_note_defaults();
+            notes.erase(0, 1);
+            continue;
+        }
+
+        // Volume
+        if (notes[0] == 'V' || notes[0] == 'v') {
+            notes.erase(0, 1);
+            size_t pos;
+            int new_volume = std::stoi(notes, &pos);
+            notes = notes.substr(pos);
+            if (new_volume >= 1 && new_volume <= 10) {
+                volume_notes = new_volume;
+            }
+            continue;
+        }
+
+        next_note_duration_s = (60.0 / beats_per_minute); // Quarter note duration in seconds
+
+        // A-G regular notes
+        // R for rest
+        // z for end rest, which is added internally to stop speaker crackle at the end
+        if ((notes[0] >= 'A' && notes[0] <= 'G') || (notes[0] >= 'a' && notes[0] <= 'g') ||
+            notes[0] == 'R' || notes[0] == 'r' || notes[0] == 'z') {
+            switch (notes[0]) {
+            case 'A':
+            case 'a':
+                next_note_freq = 440.0;
+                break;
+            case 'B':
+            case 'b':
+                next_note_freq = 493.88;
+                break;
+            case 'C':
+            case 'c':
+                next_note_freq = 523.25;
+                break;
+            case 'D':
+            case 'd':
+                next_note_freq = 587.33;
+                break;
+            case 'E':
+            case 'e':
+                next_note_freq = 659.25;
+                break;
+            case 'F':
+            case 'f':
+                next_note_freq = 698.46;
+                break;
+            case 'G':
+            case 'g':
+                next_note_freq = 783.99;
+                break;
+            case 'z':
+                next_note_duration_s = 0.1;
+                // Fallthough
+            case 'R':
+            case 'r':
+                next_note_freq = 0;
+                break;
+            }
+
+            // Adjust frequency for octave
+            next_note_freq *= pow(2, octave - 4);
+            notes.erase(0, 1);
+
+            // Note modifiers
+            while (1) {
+
+                // Duration
+                if (isdigit(notes[0])) {
+                    size_t pos;
+                    int frac_duration = std::stoi(notes, &pos);
+                    notes = notes.substr(pos);
+                    if (frac_duration >= 1 && frac_duration <= 2000) {
+                        next_note_duration_s = next_note_duration_s * (4.0 / frac_duration);
+                    }
+                    continue;
+                }
+
+                // Octave
+                if (notes[0] == '>') {
+                    next_note_freq *= 2;
+                    notes.erase(0, 1);
+                    continue;
+                }
+                if (notes[0] == '<') {
+                    next_note_freq /= 2;
+                    notes.erase(0, 1);
+                    continue;
+                }
+
+                // Sharp/flat
+                if (notes[0] == '#' || notes[0] == '+' || notes[0] == '-') {
+                    if (notes[0] == '#' || notes[0] == '+') {
+                        next_note_freq *= pow(2, 1.0 / 12);
+                    } else {
+                        next_note_freq /= pow(2, 1.0 / 12);
+                    }
+                    notes.erase(0, 1);
+                    continue;
+                }
+
+                break;
+            }
+        }
+        break;
+    }
+    next_note_parsed = true;
+}
+
+void loop() {
+    // Parse the next note
+    if (notes.length() && !next_note_parsed) {
+        parse_next_note();
+    }
+
+    // Play the next note
+    if (next_note_parsed) {
+        write_next_note_to_audio_buf();
+    }
+
+    // Check if we should stop playing
+    if (notes.length() == 0 && !next_note_parsed && audio_buf_num_populated_frames == 0 &&
+        i2s_running) {
+        stop();
+    }
+}
+
+void set_wave_volume(uint8_t new_volume) {
+    if (new_volume >= 1 && new_volume <= 10) {
+        volume_wave = new_volume;
+    }
+}
+
+void stop() {
+    i2s_zero_dma_buffer(I2S_PORT);
+    i2s_stop(I2S_PORT);
+    i2s_running = false;
+    reset_audio_buf();
+    notes = "";
+}
+
+bool is_playing() { return i2s_running; }
+
+}; // namespace YAudio
