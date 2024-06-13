@@ -3,11 +3,12 @@
 
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_NeoPixel.h>
-#include <Audio.h>
 #include <FS.h>
 #include <SD.h>
 #include <SparkFun_LIS2DH12.h>
 #include <stdint.h>
+
+#include "yaudio.h"
 
 struct accelerometer_data {
     float x;
@@ -92,7 +93,7 @@ class YBoardV3 {
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     /*
      *  This function continues to play a sound on the speaker after the
-     * play_song_from_sd function is called. This function must be called often to
+     * play_sound_file function is called. This function must be called often to
      * playback the sound on the speaker.
      */
     void loop_speaker();
@@ -102,16 +103,66 @@ class YBoardV3 {
      * representing the name of the sound file to play. The return type is a boolean
      * value (true or false). True corresponds to the sound being played
      * successfully, and false corresponds to an error playing the sound. The sound
-     * file must be stored on the microSD card. After this function is called, the
+     * file must be stored on the microSD card.
+     */
+    bool play_sound_file(const char *filename);
+
+    /* This is similar to the function above, except that it will start the song playing
+     * in the background and return immediately. The song will continue to play in the
+     * background until it is stopped with the stop_audio function, another song is
+     * played, play_notes is called, or the song finishes. After this function is called, the
      * loop_speaker function must be called often to playback the sound on the speaker.
      */
-    bool play_song_from_sd(const char *filename);
+    bool play_sound_file_background(const char *filename);
 
     /*
      *  This function sets the speaker volume. The volume is an integer between 0
-     * and 100. A volume of 0 is off, and a volume of 100 is full volume.
+     * and 10. A volume of 0 is off, and a volume of 10 is full volume.
      */
-    void set_speaker_volume(uint8_t volume);
+    void set_sd_song_volume(uint8_t volume);
+
+    /* Plays the specified sequence of notes. The function will return once the notes
+     * have finished playing.
+     *
+     * A–G	                Specifies a note that will be played.
+     * R                    Specifies a rest (no sound for the duration of the note).
+     * + or # after a note  Raises the preceding note one half-step (sharp).
+     * - after a note	      Lowers the preceding note one half-step.
+     * > after a note	      Plays the note one octave higher (multiple >’s can be used, eg: C>>)
+     * < after a note	      Plays the note one octave lower (multiple <’s can be used, eg: C<<)
+     * 1–2000 after a note	Determines the duration of the preceding note. For example,
+     *                      C16 specifies C played as a sixteenth note, B1 is B played as a whole
+     *                      note. If no duration is specified, the note is played as a quarter note.
+     * O followed by a #    Changes the octave. Valid range is 4-7. Default is 5.
+     * T followed by a #    Changes the tempo. Valid range is 40-240. Default is 120.
+     * V followed by a #    Changes the volume.  Valid range is 1-10. Default is 5.
+     * !                    Resets octave, tempo, and volume to default values.
+     * spaces               Spaces can be placed between notes or commands for readability,
+     *                      but not within a note or command (eg: "C4# D4" is valid, "C 4 # D 4" is
+     *                      not. "T120 A B C" is valid, "T 120 A B C" is not).
+     */
+    void play_notes(const char *notes);
+
+    /* This is similar to the function above, except that it will start playing the notes
+     * in the background and return immediately. The notes will continue to play in the
+     * background until they are stopped with the stop_audio function, a WAVE file is played,
+     * or the notes finish. If you call this function again before the notes finish, the
+     * the new notes will be appended to the end of the current notes.  This allows you to
+     * call this function multiple times to build up multiple sequences of notes to play.
+     * After this function is called, the loop_speaker function must be called often to
+     * playback the sound on the speaker.
+     */
+    void play_notes_background(const char *notes);
+
+    /*
+     * This function stops the audio from playing (either a song or a sequence of notes)
+     */
+    void stop_audio();
+
+    /*
+     *  This function returns whether audio is playing.
+     */
+    bool is_audio_playing();
 
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
@@ -170,7 +221,6 @@ class YBoardV3 {
 
   private:
     Adafruit_NeoPixel strip;
-    Audio audio;
     SPARKFUN_LIS2DH12 accel;
     Adafruit_AHTX0 aht;
     bool wire_begin = false;
