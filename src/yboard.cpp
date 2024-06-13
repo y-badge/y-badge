@@ -133,6 +133,10 @@ void YBoardV3::play_notes(const char *notes) {
 }
 
 void YBoardV3::play_note(int freq, int duration_ms) {
+    if (freq < 20 || freq > 20000) {
+        Serial.printf("Frequency %d is invalid. Must be between 20 and 20000 Hz.\n", freq);
+        return;
+    }
     YAudio::add_notes("X" + std::to_string(freq) + "M" + std::to_string(duration_ms));
 }
 
