@@ -420,7 +420,34 @@ void parse_next_note() {
 
                 break;
             }
+            break;
         }
+
+        // X<>M<> format for specific frequency (X) and duration (Milliseconds)
+        if (notes[0] == 'X' || notes[0] == 'x') {
+            notes.erase(0, 1);
+            size_t pos;
+            next_note_freq = std::stof(notes, &pos);
+            notes = notes.substr(pos);
+
+            if (next_note_freq >= 20 && next_note_freq <= 20000) {
+                next_note_freq = next_note_freq;
+            } else {
+                next_note_freq = 0;
+            }
+
+            if (notes[0] == 'M' || notes[0] == 'm') {
+                notes.erase(0, 1);
+                size_t pos;
+                next_note_duration_s = std::stof(notes, &pos) / 1000.0;
+                notes = notes.substr(pos);
+            }
+            break;
+        }
+
+        // If we reach here then we have a syntax error
+        Serial.printf("Syntax error in notes: %s\n", notes.c_str());
+        notes = "";
         break;
     }
     next_note_parsed = true;

@@ -132,6 +132,10 @@ void YBoardV3::play_notes(const char *notes) {
     }
 }
 
+void YBoardV3::play_note(int freq, int duration_ms) {
+    YAudio::add_notes("X" + std::to_string(freq) + "M" + std::to_string(duration_ms));
+}
+
 void YBoardV3::play_notes_background(const char *notes) { YAudio::add_notes(notes); }
 
 void YBoardV3::stop_audio() { YAudio::stop(); }
