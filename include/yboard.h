@@ -116,10 +116,12 @@ class YBoardV3 {
     bool play_sound_file_background(const char *filename);
 
     /*
-     *  This function sets the speaker volume. The volume is an integer between 0
-     * and 10. A volume of 0 is off, and a volume of 10 is full volume.
+     * This function sets the speaker volume when playing a sound file. The volume
+     * is an integer between 0 and 10. A volume of 0 is off, and a volume of 10 is full volume.
+     * This does not affect the volume of notes played with the play_notes function, as
+     * their volume is set with the V command in the notes themselves.
      */
-    void set_sd_song_volume(uint8_t volume);
+    void set_sound_file_volume(uint8_t volume);
 
     /* Plays the specified sequence of notes. The function will return once the notes
      * have finished playing.

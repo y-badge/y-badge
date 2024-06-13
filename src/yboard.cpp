@@ -123,7 +123,7 @@ bool YBoardV3::play_sound_file_background(const char *filename) {
     return true;
 }
 
-void YBoardV3::set_sd_song_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
+void YBoardV3::set_sound_file_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
 
 void YBoardV3::play_notes(const char *notes) {
     play_notes_background(notes);
