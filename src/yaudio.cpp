@@ -29,6 +29,11 @@ static const int FRAME_SIZE = 1024;
 static const int AUDIO_BUF_NUM_FRAMES = 100;
 static int16_t audio_buf[FRAME_SIZE * AUDIO_BUF_NUM_FRAMES];
 
+// This is the number of WAVE frames to buffer. Making this larger will reduce the chance of
+// speaker crackle, but will also increase the delay between changing the volume and hearing the
+// change.  Given a frame size of 1024 and a sample rate of 16000, this is 1024 * 5 / 16000 = 0.32s
+static const int WAVE_FRAMES_TO_BUFFER = 5;
+
 ////////////////////////////// Global Variables ////////////////////////////////
 // This is the index of the next frame to write to the I2S buffer.
 static int audio_buf_frame_idx_to_send;
@@ -439,7 +444,7 @@ void loop() {
             stop();
         }
     } else if (wave_running) {
-        if (file.available()) {
+        if (file.available() && audio_buf_num_populated_frames < WAVE_FRAMES_TO_BUFFER) {
             int bytes_to_read = FRAME_SIZE * BYTES_PER_SAMPLE;
 
             size_t bytes_read =
@@ -471,7 +476,6 @@ void set_wave_volume(uint8_t new_volume) {
 }
 
 void stop() {
-    Serial.println("Stopping audio");
     if (i2s_running) {
         i2s_stop(I2S_PORT);
         i2s_running = false;
@@ -490,7 +494,7 @@ void stop() {
 
 bool is_playing() { return i2s_running; }
 
-void play_song_from_sd(const char *filename) {
+void play_sound_file(const char *filename) {
     // Whether notes or wave is running, stop it
     stop();
 

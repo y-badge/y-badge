@@ -93,7 +93,7 @@ class YBoardV3 {
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     /*
      *  This function continues to play a sound on the speaker after the
-     * play_song_from_sd function is called. This function must be called often to
+     * play_sound_file function is called. This function must be called often to
      * playback the sound on the speaker.
      */
     void loop_speaker();
@@ -105,7 +105,7 @@ class YBoardV3 {
      * successfully, and false corresponds to an error playing the sound. The sound
      * file must be stored on the microSD card.
      */
-    bool play_song_from_sd(const char *filename);
+    bool play_sound_file(const char *filename);
 
     /* This is similar to the function above, except that it will start the song playing
      * in the background and return immediately. The song will continue to play in the
@@ -113,7 +113,7 @@ class YBoardV3 {
      * played, play_notes is called, or the song finishes. After this function is called, the
      * loop_speaker function must be called often to playback the sound on the speaker.
      */
-    bool play_song_from_sd_background(const char *filename);
+    bool play_sound_file_background(const char *filename);
 
     /*
      *  This function sets the speaker volume. The volume is an integer between 0
@@ -141,7 +141,7 @@ class YBoardV3 {
      *                      but not within a note or command (eg: "C4# D4" is valid, "C 4 # D 4" is
      *                      not. "T120 A B C" is valid, "T 120 A B C" is not).
      */
-    void play_notes(std::string notes);
+    void play_notes(const char *notes);
 
     /* This is similar to the function above, except that it will start playing the notes
      * in the background and return immediately. The notes will continue to play in the
@@ -152,7 +152,7 @@ class YBoardV3 {
      * After this function is called, the loop_speaker function must be called often to
      * playback the sound on the speaker.
      */
-    void play_notes_background(std::string notes);
+    void play_notes_background(const char *notes);
 
     /*
      * This function stops the audio from playing (either a song or a sequence of notes)
