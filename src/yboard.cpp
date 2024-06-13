@@ -111,7 +111,6 @@ bool YBoardV3::play_song_from_sd(const char *filename) {
         return false;
     }
 
-    Serial.printf("Playing %s\n", filename);
     YAudio::play_song_from_sd(filename);
     return true;
 }
