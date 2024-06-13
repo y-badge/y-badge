@@ -110,7 +110,7 @@ class YBoardV3 {
 
     /*
      *  This function sets the speaker volume. The volume is an integer between 0
-     * and 100. A volume of 0 is off, and a volume of 100 is full volume.
+     * and 10. A volume of 0 is off, and a volume of 10 is full volume.
      */
     void set_sd_song_volume(uint8_t volume);
 

@@ -98,7 +98,7 @@ bool YBoardV3::setup_speaker() {
     YAudio::setup();
 
     // // Set Volume
-    YAudio::set_wave_volume(25);
+    YAudio::set_wave_volume(5);
 
     return true;
 }
@@ -111,7 +111,9 @@ bool YBoardV3::play_song_from_sd(const char *filename) {
         return false;
     }
 
-    // return audio.connecttoFS(SD, filename);
+    Serial.printf("Playing %s\n", filename);
+    YAudio::play_song_from_sd(filename);
+    return true;
 }
 
 void YBoardV3::set_sd_song_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }

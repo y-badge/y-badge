@@ -1,9 +1,10 @@
 #include "yaudio.h"
 
 // #include <I2S.h>
-#include "driver/i2s.h"
-
 #include <Arduino.h>
+#include <FS.h>
+#include <SD.h>
+#include <driver/i2s.h>
 
 namespace YAudio {
 
@@ -35,6 +36,11 @@ static int audio_buf_frame_idx_to_send;
 // This is the index into the audio buffer of the next sample to write to
 static int audio_buf_empty_idx;
 
+static bool i2s_running;
+static bool notes_running;
+static bool wave_running;
+
+////// Notes //////
 // This is the sequence of notes to play
 static std::string notes;
 
@@ -43,15 +49,13 @@ static int beats_per_minute;
 static int octave;
 static int volume_notes;
 
-// I2S is running?
-static bool i2s_running;
-
 // Next note to play
 static bool next_note_parsed;
 static float next_note_freq;
 static float next_note_duration_s;
 
-// Wave file
+////// Wave file //////
+static fs::File file;
 static int volume_wave;
 
 //////////////////////////// Private Function Prototypes ///////////////////////
@@ -64,18 +68,23 @@ static void start_i2s();
 
 ////////////////////////////// Public Functions ///////////////////////////////
 void add_notes(std::string new_notes) {
-    if (!i2s_running) {
-        start_i2s();
+    // If WAVE is running, then stop it and reset the audio buffer.
+    // Otherwise if notes are running, it's fine to let them keep running.
+    if (wave_running) {
+        stop();
     }
 
-    // Removing ending z
+    // Removing ending z, which is used as a small rest at the end to prevent speaker crackle
     if (notes.length() && (notes[notes.size() - 1] == 'z')) {
         notes = notes.substr(0, notes.size() - 1);
     }
 
+    // Append the new notes to the existing notes, and add an ending rest
     notes += new_notes + "z";
-    if (audio_buf_num_populated_frames < 0) {
-        audio_buf_num_populated_frames = 0;
+
+    notes_running = true;
+    if (!i2s_running) {
+        start_i2s();
     }
 }
 
@@ -167,15 +176,16 @@ void I2Sout(void *params) {
         } while (retv == pdPASS);
 
         if (TXdoneEvent) {
-            if (audio_buf_num_populated_frames) {
+            if (audio_buf_num_populated_frames >= 0) {
                 size_t bytes_written;
                 i2s_write(I2S_PORT, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
                           FRAME_SIZE * BYTES_PER_SAMPLE, &bytes_written, portMAX_DELAY);
 
                 audio_buf_frame_idx_to_send =
                     (audio_buf_frame_idx_to_send + 1) % AUDIO_BUF_NUM_FRAMES;
+                audio_buf_num_populated_frames--;
             }
-            audio_buf_num_populated_frames--;
+            // Serial.printf("Frame sent. # populated: %d\n", audio_buf_num_populated_frames);
         }
     }
 }
@@ -199,6 +209,8 @@ void setup() {
     reset_audio_buf();
     set_note_defaults();
     i2s_running = false;
+    notes_running = false;
+    wave_running = false;
     volume_wave = 5;
 
     const i2s_config_t i2s_config = {
@@ -226,30 +238,28 @@ void setup() {
 
     if (err != ESP_OK) {
         while (true) {
-            Serial.printf("Failed installing driver: %d\n", err);
+            Serial.printf("Failed installing I2S driver: %d\n", err);
         }
     }
 
     err = i2s_set_pin(I2S_PORT, &pin_config);
     if (err != ESP_OK) {
-        Serial.printf("Failed setting pin: %d\n", err);
+        Serial.printf("Failed setting I2S pin configuration: %d\n", err);
         while (true)
             ;
     }
 
     i2s_running = true;
-    Serial.println("I2S setup complete and running");
+    // Serial.println("I2S setup complete and running");
 }
 
 void write_next_note_to_audio_buf() {
 
     // Check if we have enough space in the buffer to add the note
-    int avail_space = (AUDIO_BUF_NUM_FRAMES - audio_buf_num_populated_frames) * FRAME_SIZE;
+    int avail_space = (AUDIO_BUF_NUM_FRAMES - audio_buf_num_populated_frames - 1) * FRAME_SIZE;
     int note_samples = next_note_duration_s * SAMPLE_RATE;
-    // The logic below is commented out because it leads to cutting out sometimes.
-    // I have no idea why...
-    // if (avail_space > note_samples) {
-    if (audio_buf_num_populated_frames < 4) {
+
+    if (avail_space > note_samples) {
 
         int amplitude = 16000 * (volume_notes / 10.0);
         if (next_note_freq < 800) {
@@ -265,8 +275,6 @@ void write_next_note_to_audio_buf() {
             generate_sine_wave(next_note_duration_s, next_note_freq, amplitude);
         }
         next_note_parsed = false;
-    } else {
-        Serial.println("Buffer full");
     }
 }
 
@@ -414,37 +422,106 @@ void parse_next_note() {
 }
 
 void loop() {
-    // Parse the next note
-    if (notes.length() && !next_note_parsed) {
-        parse_next_note();
-    }
+    if (notes_running) {
+        // Parse the next note
+        if (notes.length() && !next_note_parsed) {
+            parse_next_note();
+        }
 
-    // Play the next note
-    if (next_note_parsed) {
-        write_next_note_to_audio_buf();
-    }
+        // Play the next note
+        if (next_note_parsed) {
+            write_next_note_to_audio_buf();
+        }
 
-    // Check if we should stop playing
-    if (notes.length() == 0 && !next_note_parsed && audio_buf_num_populated_frames == 0 &&
-        i2s_running) {
-        stop();
+        // Check if we should stop playing
+        if (notes.length() == 0 && !next_note_parsed && audio_buf_num_populated_frames == 0 &&
+            i2s_running) {
+            stop();
+        }
+    } else if (wave_running) {
+        if (file.available()) {
+            int bytes_to_read = FRAME_SIZE * BYTES_PER_SAMPLE;
+
+            size_t bytes_read =
+                file.read((uint8_t *)&audio_buf[audio_buf_empty_idx], bytes_to_read);
+            yield();
+            if (bytes_read == bytes_to_read) {
+                // Swap even and odd samples, and apply volume
+                for (int i = 0; i < FRAME_SIZE; i += 2) {
+                    int16_t temp = audio_buf[audio_buf_empty_idx + i];
+                    audio_buf[audio_buf_empty_idx + i] =
+                        audio_buf[audio_buf_empty_idx + i + 1] * volume_wave / 10.0;
+                    audio_buf[audio_buf_empty_idx + i + 1] = temp * volume_wave / 10.0;
+                }
+
+                audio_buf_empty_idx += FRAME_SIZE % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
+                audio_buf_num_populated_frames++;
+                // Serial.printf("Frame filled. # populated: %d\n", audio_buf_num_populated_frames);
+            }
+        } else if (audio_buf_num_populated_frames == 0) {
+            stop();
+        }
     }
 }
 
 void set_wave_volume(uint8_t new_volume) {
-    if (new_volume >= 1 && new_volume <= 10) {
+    if (new_volume >= 0 && new_volume <= 10) {
         volume_wave = new_volume;
     }
 }
 
 void stop() {
+    // Serial.println("Stopping audio");
+    if (i2s_running) {
+        i2s_stop(I2S_PORT);
+        i2s_running = false;
+    }
+    if (wave_running) {
+        file.close();
+        wave_running = false;
+    }
+    if (notes_running) {
+        notes_running = false;
+        notes = "";
+    }
     i2s_zero_dma_buffer(I2S_PORT);
-    i2s_stop(I2S_PORT);
-    i2s_running = false;
     reset_audio_buf();
-    notes = "";
 }
 
 bool is_playing() { return i2s_running; }
+
+void play_song_from_sd(const char *filename) {
+    // Whether notes or wave is running, stop it
+    stop();
+
+    // Read the WAVE file header
+    file = SD.open(filename);
+    uint8_t header[44];
+    int bytes_read = file.read(header, 44);
+    if (bytes_read != 44) {
+        Serial.println("Error reading WAVE file header");
+        file.close();
+        return;
+    }
+
+    int num_channels = *(uint16_t *)&header[22];
+    if (num_channels != 1) {
+        Serial.printf("This file has %f channels. Only mono WAVE files are supported.",
+                      num_channels);
+        file.close();
+        return;
+    }
+
+    uint32_t sample_rate = *(uint32_t *)&header[24];
+    if (sample_rate != SAMPLE_RATE) {
+        Serial.printf("This file has a sample rate of %d. Only %d Hz sample rate is supported\n",
+                      sample_rate, SAMPLE_RATE);
+        file.close();
+        return;
+    }
+
+    start_i2s();
+    wave_running = true;
+}
 
 }; // namespace YAudio

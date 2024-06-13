@@ -12,6 +12,7 @@ void set_wave_volume(uint8_t volume);
 void add_notes(std::string notes);
 void stop();
 bool is_playing();
+void play_song_from_sd(const char *filename);
 }; // namespace YAudio
 
 #endif /* YAUDIO_H */
