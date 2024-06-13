@@ -364,7 +364,7 @@ void parse_next_note() {
                 next_note_freq = 783.99;
                 break;
             case 'z':
-                next_note_duration_s = 0.1;
+                next_note_duration_s = 0.2;
                 // Fallthough
             case 'R':
             case 'r':
@@ -458,7 +458,7 @@ void loop() {
                 audio_buf_num_populated_frames++;
                 // Serial.printf("Frame filled. # populated: %d\n", audio_buf_num_populated_frames);
             }
-        } else if (audio_buf_num_populated_frames == 0) {
+        } else if (audio_buf_num_populated_frames <= 0) {
             stop();
         }
     }
@@ -471,7 +471,7 @@ void set_wave_volume(uint8_t new_volume) {
 }
 
 void stop() {
-    // Serial.println("Stopping audio");
+    Serial.println("Stopping audio");
     if (i2s_running) {
         i2s_stop(I2S_PORT);
         i2s_running = false;

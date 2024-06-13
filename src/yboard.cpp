@@ -106,6 +106,14 @@ bool YBoardV3::setup_speaker() {
 void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_song_from_sd(const char *filename) {
+    bool ret = play_song_from_sd_background(filename);
+    while (is_audio_playing()) {
+        loop_speaker();
+    }
+    return ret;
+}
+
+bool YBoardV3::play_song_from_sd_background(const char *filename) {
     if (!SD.exists(filename)) {
         Serial.println("File does not exist.");
         return false;
@@ -117,7 +125,14 @@ bool YBoardV3::play_song_from_sd(const char *filename) {
 
 void YBoardV3::set_sd_song_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
 
-void YBoardV3::play_notes(std::string notes) { YAudio::add_notes(notes); }
+void YBoardV3::play_notes(std::string notes) {
+    play_notes_background(notes);
+    while (is_audio_playing()) {
+        loop_speaker();
+    }
+}
+
+void YBoardV3::play_notes_background(std::string notes) { YAudio::add_notes(notes); }
 
 void YBoardV3::stop_audio() { YAudio::stop(); }
 
