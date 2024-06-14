@@ -132,7 +132,7 @@ void YBoardV3::play_notes(const char *notes) {
     }
 }
 
-void YBoardV3::play_note(int freq, int duration_ms) {
+void YBoardV3::play_note_background(int freq, int duration_ms) {
     if (freq < 20 || freq > 20000) {
         Serial.printf("Frequency %d is invalid. Must be between 20 and 20000 Hz.\n", freq);
         return;

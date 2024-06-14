@@ -152,7 +152,7 @@ class YBoardV3 {
      * to play in the background until it finishes. If you call this function again before
      * the note finishes, the new note will be played after the current note finishes.
      */
-    void play_note(int freq, int duration_ms);
+    void play_note_background(int freq, int duration_ms);
 
     /* This is similar to the function above, except that it will start playing the notes
      * in the background and return immediately. The notes will continue to play in the
