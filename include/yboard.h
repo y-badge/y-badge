@@ -145,15 +145,6 @@ class YBoardV3 {
      */
     void play_notes(const char *notes);
 
-    /* This function plays a single note on the speaker. The freq parameter is a float
-     * representing the frequency of the note to play in Hz. The duration_ms parameter
-     * is an integer representing the duration of the note in milliseconds.  The function
-     * is non-blocking, meaning that it will return immediately and the note will continue
-     * to play in the background until it finishes. If you call this function again before
-     * the note finishes, the new note will be played after the current note finishes.
-     */
-    void play_note_background(int freq, int duration_ms);
-
     /* This is similar to the function above, except that it will start playing the notes
      * in the background and return immediately. The notes will continue to play in the
      * background until they are stopped with the stop_audio function, a WAVE file is played,
@@ -164,6 +155,20 @@ class YBoardV3 {
      * playback the sound on the speaker.
      */
     void play_notes_background(const char *notes);
+
+    /* This function plays a single note on the speaker. The freq parameter is a float
+     * representing the frequency of the note to play in Hz. The duration_ms parameter
+     * is an integer representing the duration of the note in milliseconds. The function
+     * is blocking, meaning that it will not return until the note finishes playing.
+     */
+    void play_note(int freq, int duration_ms);
+
+    /* This function is similar to the function above, except that it will start playing
+     * the note in the background and return immediately. The note will continue to play
+     * in the background until it finishes. If you call this function again before the
+     * note finishes, the new note will be played after the current note finishes.
+     */
+    void play_note_background(int freq, int duration_ms);
 
     /*
      * This function stops the audio from playing (either a song or a sequence of notes)
