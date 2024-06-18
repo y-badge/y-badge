@@ -21,5 +21,5 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
-      - name: Build PlatformIO examples
+      - name: Check code
         run: pio check --fail-on-defect low
