@@ -1,6 +1,5 @@
 #include "yaudio.h"
 
-// #include <I2S.h>
 #include <Arduino.h>
 #include <FS.h>
 #include <SD.h>
@@ -72,7 +71,7 @@ static void set_note_defaults();
 static void start_i2s();
 
 ////////////////////////////// Public Functions ///////////////////////////////
-void add_notes(std::string new_notes) {
+void add_notes(const std::string &new_notes) {
     // If WAVE is running, then stop it and reset the audio buffer.
     // Otherwise if notes are running, it's fine to let them keep running.
     if (wave_running) {
@@ -81,7 +80,7 @@ void add_notes(std::string new_notes) {
 
     // Removing ending z, which is used as a small rest at the end to prevent speaker crackle
     if (notes.length() && (notes[notes.size() - 1] == 'z')) {
-        notes = notes.substr(0, notes.size() - 1);
+        notes.pop_back();
     }
 
     // Append the new notes to the existing notes, and add an ending rest
@@ -160,11 +159,9 @@ bool TXdoneEvent = false;
 void I2Sout(void *params) {
     int retv;
     i2s_event_t i2s_evt;
-    int qCnt;
 
     while (1) {
         TXdoneEvent = false;
-        qCnt = 0;
         do // wait on I2S event queue until a TX_DONE is found
         {
             retv = xQueueReceive(
@@ -174,7 +171,6 @@ void I2Sout(void *params) {
                 (i2s_evt.type == I2S_EVENT_TX_DONE)) // I2S DMA finish sent 1 buffer
             {
                 TXdoneEvent = true;
-                qCnt++;
                 break;
             }
             vTaskDelay(1); // make sure there's time for some other processing if we need to wait!
@@ -235,23 +231,19 @@ void setup() {
 
     int err;
 
-    i2s_driver_install(I2S_PORT, &i2s_config, I2S_Q_LEN, &i2s_event_queue);
-
-    int xret;
-    TaskHandle_t I2StaskHandle;
-    xret = xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, &I2StaskHandle);
-
+    err = i2s_driver_install(I2S_PORT, &i2s_config, I2S_Q_LEN, &i2s_event_queue);
     if (err != ESP_OK) {
-        while (true) {
-            Serial.printf("Failed installing I2S driver: %d\n", err);
-        }
+        Serial.printf("Failed installing I2S driver: %d\n", err);
+        return;
     }
+
+    TaskHandle_t I2StaskHandle;
+    xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, &I2StaskHandle);
 
     err = i2s_set_pin(I2S_PORT, &pin_config);
     if (err != ESP_OK) {
         Serial.printf("Failed setting I2S pin configuration: %d\n", err);
-        while (true)
-            ;
+        return;
     }
 
     i2s_running = true;
@@ -426,21 +418,19 @@ void parse_next_note() {
         // X<>M<> format for specific frequency (X) and duration (Milliseconds)
         if (notes[0] == 'X' || notes[0] == 'x') {
             notes.erase(0, 1);
-            size_t pos;
-            next_note_freq = std::stof(notes, &pos);
-            notes = notes.substr(pos);
+            size_t x_pos;
+            next_note_freq = std::stof(notes, &x_pos);
+            notes = notes.substr(x_pos);
 
-            if (next_note_freq >= 20 && next_note_freq <= 20000) {
-                next_note_freq = next_note_freq;
-            } else {
+            if (!(next_note_freq >= 20 && next_note_freq <= 20000)) {
                 next_note_freq = 0;
             }
 
             if (notes[0] == 'M' || notes[0] == 'm') {
                 notes.erase(0, 1);
-                size_t pos;
-                next_note_duration_s = std::stof(notes, &pos) / 1000.0;
-                notes = notes.substr(pos);
+                size_t m_pos;
+                next_note_duration_s = std::stof(notes, &m_pos) / 1000.0;
+                notes = notes.substr(m_pos);
             }
             break;
         }
@@ -496,11 +486,7 @@ void loop() {
     }
 }
 
-void set_wave_volume(uint8_t new_volume) {
-    if (new_volume >= 0 && new_volume <= 10) {
-        volume_wave = new_volume;
-    }
-}
+void set_wave_volume(uint8_t new_volume) { volume_wave = new_volume > 10 ? 10 : new_volume; }
 
 void stop() {
     if (i2s_running) {
