@@ -240,6 +240,7 @@ class YBoardV3 {
     SPARKFUN_LIS2DH12 accel;
     Adafruit_AHTX0 aht;
     bool wire_begin = false;
+    bool sd_card_present = false;
 
     void setup_leds();
     void setup_switches();

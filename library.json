@@ -25,7 +25,11 @@
     "dependencies": {
         "adafruit/Adafruit NeoPixel": "^1.12.2",
         "sparkfun/SparkFun LIS2DH12 Arduino Library": "^1.0.3",
-        "adafruit/Adafruit AHTX0": "^2.0.5"
+        "adafruit/Adafruit AHTX0": "^2.0.5",
+        "adafruit/Adafruit BusIO": "*",
+        "adafruit/Adafruit SH110X": "*",
+        "adafruit/Adafruit GFX Library": "*",
+        "adafruit/Adafruit Unified Sensor": "*"
     },
     "frameworks": [
         "arduino"
