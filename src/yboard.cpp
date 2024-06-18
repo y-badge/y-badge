@@ -89,17 +89,19 @@ bool YBoardV3::setup_speaker() {
     // Initialize SPI bus for microSD Card
     SPI.begin(spi_sck_pin, spi_miso_pin, spi_mosi_pin);
 
+    YAudio::setup();
+
+    // Set Volume
+    YAudio::set_wave_volume(5);
+
     // Start microSD Card
     if (!SD.begin(sd_cs_pin)) {
         Serial.println("Error accessing microSD card!");
+        sd_card_present = false;
         return false;
     }
 
-    YAudio::setup();
-
-    // // Set Volume
-    YAudio::set_wave_volume(5);
-
+    sd_card_present = true;
     return true;
 }
 
@@ -107,13 +109,23 @@ void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_sound_file(const char *filename) {
     bool ret = play_sound_file_background(filename);
+
+    if (!ret) {
+        return false;
+    }
+
     while (is_audio_playing()) {
         loop_speaker();
     }
-    return ret;
+
+    return true;
 }
 
 bool YBoardV3::play_sound_file_background(const char *filename) {
+    if (!sd_card_present) {
+        return false;
+    }
+
     if (!SD.exists(filename)) {
         Serial.println("File does not exist.");
         return false;
