@@ -1,7 +1,7 @@
-name: PlatformIO Static Code Analysis
+name: Static Code Analysis
 on: [push]
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     steps:
