@@ -123,6 +123,7 @@ bool YBoardV3::play_sound_file(const char *filename) {
 
 bool YBoardV3::play_sound_file_background(const char *filename) {
     if (!sd_card_present) {
+        Serial.println("ERROR: SD Card not present.");
         return false;
     }
 
