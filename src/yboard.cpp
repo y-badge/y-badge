@@ -7,8 +7,6 @@ YBoardV3::YBoardV3() : strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
 YBoardV3::~YBoardV3() {}
 
 void YBoardV3::setup() {
-    Serial.begin(9600);
-    delay(2000);
     setup_leds();
     setup_switches();
     setup_buttons();
