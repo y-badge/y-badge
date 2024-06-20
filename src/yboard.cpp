@@ -131,7 +131,7 @@ bool YBoardV3::play_sound_file_background(const std::string &filename) {
         return false;
     }
 
-    if (!SD.exists(_filename)) {
+    if (!SD.exists(_filename.c_str())) {
         Serial.println("File does not exist.");
         return false;
     }
