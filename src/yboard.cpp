@@ -106,9 +106,7 @@ bool YBoardV3::setup_speaker() {
 void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_sound_file(const char *filename) {
-    bool ret = play_sound_file_background(filename);
-
-    if (!ret) {
+    if (!play_sound_file_background(filename)) {
         return false;
     }
 
