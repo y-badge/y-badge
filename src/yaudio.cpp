@@ -518,12 +518,12 @@ void stop() {
 
 bool is_playing() { return i2s_running; }
 
-void play_sound_file(const char *filename) {
+void play_sound_file(const std::string &filename) {
     // Whether notes or wave is running, stop it
     stop();
 
     // Read the WAVE file header
-    file = SD.open(filename);
+    file = SD.open(filename.c_str());
     uint8_t header[44];
     int bytes_read = file.read(header, 44);
     if (bytes_read != 44) {

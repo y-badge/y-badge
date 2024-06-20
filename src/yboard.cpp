@@ -105,7 +105,7 @@ bool YBoardV3::setup_speaker() {
 
 void YBoardV3::loop_speaker() { YAudio::loop(); }
 
-bool YBoardV3::play_sound_file(const char *filename) {
+bool YBoardV3::play_sound_file(const std::string &filename) {
     bool ret = play_sound_file_background(filename);
 
     if (!ret) {
@@ -119,31 +119,37 @@ bool YBoardV3::play_sound_file(const char *filename) {
     return true;
 }
 
-bool YBoardV3::play_sound_file_background(const char *filename) {
+bool YBoardV3::play_sound_file_background(const std::string &filename) {
+    // Prepend filename with a / if it doesn't have one
+    std::string _filename = filename;
+    if (_filename[0] != '/') {
+        _filename.insert(0, "/");
+    }
+
     if (!sd_card_present) {
         Serial.println("ERROR: SD Card not present.");
         return false;
     }
 
-    if (!SD.exists(filename)) {
+    if (!SD.exists(_filename.c_str())) {
         Serial.println("File does not exist.");
         return false;
     }
 
-    YAudio::play_sound_file(filename);
+    YAudio::play_sound_file(_filename);
     return true;
 }
 
 void YBoardV3::set_sound_file_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
 
-void YBoardV3::play_notes(const char *notes) {
+void YBoardV3::play_notes(const std::string &notes) {
     play_notes_background(notes);
     while (is_audio_playing()) {
         loop_speaker();
     }
 }
 
-void YBoardV3::play_notes_background(const char *notes) { YAudio::add_notes(notes); }
+void YBoardV3::play_notes_background(const std::string &notes) { YAudio::add_notes(notes); }
 
 void YBoardV3::stop_audio() { YAudio::stop(); }
 
