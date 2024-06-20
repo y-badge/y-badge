@@ -121,8 +121,9 @@ bool YBoardV3::play_sound_file(const std::string &filename) {
 
 bool YBoardV3::play_sound_file_background(const std::string &filename) {
     // Prepend filename with a / if it doesn't have one
-    if (filename[0] != '/') {
-        filename.insert(0, "/");
+    std::string _filename = filename;
+    if (_filename[0] != '/') {
+        _filename.insert(0, "/");
     }
 
     if (!sd_card_present) {
@@ -130,12 +131,12 @@ bool YBoardV3::play_sound_file_background(const std::string &filename) {
         return false;
     }
 
-    if (!SD.exists(filename)) {
+    if (!SD.exists(_filename)) {
         Serial.println("File does not exist.");
         return false;
     }
 
-    YAudio::play_sound_file(filename);
+    YAudio::play_sound_file(_filename);
     return true;
 }
 
