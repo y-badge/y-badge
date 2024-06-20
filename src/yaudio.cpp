@@ -507,7 +507,7 @@ void stop() {
 
 bool is_playing() { return i2s_running; }
 
-void play_sound_file(const char *filename) {
+bool play_sound_file(const char *filename) {
     // Whether notes or wave is running, stop it
     stop();
 
@@ -518,7 +518,7 @@ void play_sound_file(const char *filename) {
     if (bytes_read != 44) {
         Serial.println("Error reading WAVE file header");
         file.close();
-        return;
+        return false;
     }
 
     int num_channels = *(uint16_t *)&header[22];
@@ -526,7 +526,7 @@ void play_sound_file(const char *filename) {
         Serial.printf("This file has %f channels. Only mono WAVE files are supported.",
                       num_channels);
         file.close();
-        return;
+        return false;
     }
 
     uint32_t sample_rate = *(uint32_t *)&header[24];
@@ -534,11 +534,12 @@ void play_sound_file(const char *filename) {
         Serial.printf("This file has a sample rate of %d. Only %d Hz sample rate is supported\n",
                       sample_rate, SAMPLE_RATE);
         file.close();
-        return;
+        return false;
     }
 
     start_i2s();
     wave_running = true;
+    return true;
 }
 
 }; // namespace YAudio
