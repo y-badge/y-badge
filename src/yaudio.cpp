@@ -373,6 +373,8 @@ void parse_next_note() {
             next_note_freq *= pow(2, octave - 4);
             notes.erase(0, 1);
 
+            float dot_duration = next_note_duration_s;
+
             // Note modifiers
             while (1) {
 
@@ -384,6 +386,14 @@ void parse_next_note() {
                     if (frac_duration >= 1 && frac_duration <= 2000) {
                         next_note_duration_s = next_note_duration_s * (4.0 / frac_duration);
                     }
+                    continue;
+                }
+
+                // Dot
+                if (notes[0] == '.') {
+                    dot_duration /= 2;
+                    next_note_duration_s += dot_duration;
+                    notes.erase(0, 1);
                     continue;
                 }
 
