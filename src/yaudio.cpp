@@ -486,7 +486,8 @@ void loop() {
                     audio_buf[audio_buf_empty_idx + i + 1] = temp * volume_wave / 10.0;
                 }
 
-                audio_buf_empty_idx += FRAME_SIZE % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
+                audio_buf_empty_idx =
+                    (audio_buf_empty_idx + FRAME_SIZE) % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
                 audio_buf_num_populated_frames++;
                 // Serial.printf("Frame filled. # populated: %d\n", audio_buf_num_populated_frames);
             }
