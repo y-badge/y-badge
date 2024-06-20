@@ -518,7 +518,7 @@ void stop() {
 
 bool is_playing() { return i2s_running; }
 
-void play_sound_file(const char *filename) {
+void play_sound_file(const std::string &filename) {
     // Whether notes or wave is running, stop it
     stop();
 
