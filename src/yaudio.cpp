@@ -80,6 +80,8 @@ bool add_notes(const std::string &new_notes) {
     }
 
     if ((notes.length() + new_notes.length()) > MAX_NOTES_IN_BUFFER) {
+        Serial.printf("Error adding notes: too many notes in buffer (%d + %d > %d).\n",
+                      new_notes.length(), notes.length(), MAX_NOTES_IN_BUFFER);
         return false;
     }
 
