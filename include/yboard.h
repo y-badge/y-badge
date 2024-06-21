@@ -143,7 +143,7 @@ class YBoardV3 {
      *                      but not within a note or command (eg: "C4# D4" is valid, "C 4 # D 4" is
      *                      not. "T120 A B C" is valid, "T 120 A B C" is not).
      */
-    bool play_notes(const std::string &filename);
+    bool play_notes(const std::string &new_notes);
 
     /* This is similar to the function above, except that it will start playing the notes
      * in the background and return immediately. The notes will continue to play in the
@@ -154,7 +154,7 @@ class YBoardV3 {
      * After this function is called, the loop_speaker function must be called often to
      * playback the sound on the speaker.
      */
-    bool play_notes_background(const std::string &filename);
+    bool play_notes_background(const std::string &new_notes);
 
     /*
      * This function stops the audio from playing (either a song or a sequence of notes)
