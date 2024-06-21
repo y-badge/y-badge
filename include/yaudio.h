@@ -12,7 +12,7 @@ void set_wave_volume(uint8_t volume);
 void add_notes(const std::string &new_notes);
 void stop();
 bool is_playing();
-bool play_sound_file(const char *filename);
+bool play_sound_file(const std::string &filename);
 }; // namespace YAudio
 
 #endif /* YAUDIO_H */
