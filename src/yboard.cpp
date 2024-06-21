@@ -27,7 +27,10 @@ void YBoardV3::set_led_color(uint16_t index, uint8_t red, uint8_t green, uint8_t
     strip.show();
 }
 
-void YBoardV3::set_led_brightness(uint8_t brightness) { strip.setBrightness(brightness); }
+void YBoardV3::set_led_brightness(uint8_t brightness) {
+    strip.setBrightness(brightness);
+    strip.show();
+}
 
 void YBoardV3::set_all_leds_color(uint8_t red, uint8_t green, uint8_t blue) {
     for (int i = 0; i < this->led_count; i++) {
