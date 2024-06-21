@@ -14,7 +14,7 @@ i2s_port_t I2S_PORT = I2S_NUM_0;
 static const int BITS_PER_SAMPLE = 16;
 static const int BYTES_PER_SAMPLE = BITS_PER_SAMPLE / 8;
 static const int SAMPLE_RATE = 16000; // sample rate in Hz
-static const int MAX_NOTES_IN_BUFFER = 14000;
+static const int MAX_NOTES_IN_BUFFER = 4000;
 
 // The number of frames of valid PCM audio data in the audio buffer. This will be incremented when
 // we add a note to the audio buffer, and decremented when we write a frame to the I2S buffer.
