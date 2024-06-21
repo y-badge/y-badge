@@ -14,6 +14,7 @@ i2s_port_t I2S_PORT = I2S_NUM_0;
 static const int BITS_PER_SAMPLE = 16;
 static const int BYTES_PER_SAMPLE = BITS_PER_SAMPLE / 8;
 static const int SAMPLE_RATE = 16000; // sample rate in Hz
+static const int MAX_NOTES_IN_BUFFER = 4000;
 
 // The number of frames of valid PCM audio data in the audio buffer. This will be incremented when
 // we add a note to the audio buffer, and decremented when we write a frame to the I2S buffer.
@@ -71,11 +72,17 @@ static void set_note_defaults();
 static void start_i2s();
 
 ////////////////////////////// Public Functions ///////////////////////////////
-void add_notes(const std::string &new_notes) {
+bool add_notes(const std::string &new_notes) {
     // If WAVE is running, then stop it and reset the audio buffer.
     // Otherwise if notes are running, it's fine to let them keep running.
     if (wave_running) {
         stop();
+    }
+
+    if ((notes.length() + new_notes.length()) > MAX_NOTES_IN_BUFFER) {
+        Serial.printf("Error adding notes: too many notes in buffer (%d + %d > %d).\n",
+                      new_notes.length(), notes.length(), MAX_NOTES_IN_BUFFER);
+        return false;
     }
 
     // Removing ending z, which is used as a small rest at the end to prevent speaker crackle
@@ -90,6 +97,8 @@ void add_notes(const std::string &new_notes) {
     if (!i2s_running) {
         start_i2s();
     }
+
+    return true;
 }
 
 ////////////////////////////// Private Functions ///////////////////////////////

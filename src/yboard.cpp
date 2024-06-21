@@ -139,14 +139,19 @@ bool YBoardV3::play_sound_file_background(const std::string &filename) {
 
 void YBoardV3::set_sound_file_volume(uint8_t volume) { YAudio::set_wave_volume(volume); }
 
-void YBoardV3::play_notes(const std::string &notes) {
-    play_notes_background(notes);
+bool YBoardV3::play_notes(const std::string &notes) {
+    if (!play_notes_background(notes)) {
+        return false;
+    }
+
     while (is_audio_playing()) {
         loop_speaker();
     }
+
+    return true;
 }
 
-void YBoardV3::play_notes_background(const std::string &notes) { YAudio::add_notes(notes); }
+bool YBoardV3::play_notes_background(const std::string &notes) { return YAudio::add_notes(notes); }
 
 void YBoardV3::stop_audio() { YAudio::stop(); }
 
