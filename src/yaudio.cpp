@@ -585,15 +585,12 @@ bool play_sound_file(const std::string &filename) {
     return true;
 }
 
-void init_wave_header(wave_header_t *header, int wavSize) {
-    const int headerSize = 44;
-    unsigned int fileSize = wavSize + headerSize - 8;
-
+void init_wave_header(wave_header_t *header) {
     header->riff_tag[0] = 'R';
     header->riff_tag[1] = 'I';
     header->riff_tag[2] = 'F';
     header->riff_tag[3] = 'F';
-    header->riff_length = fileSize;
+    header->riff_length = 0; // This needs to be filled in later
     header->wave_tag[0] = 'W';
     header->wave_tag[1] = 'A';
     header->wave_tag[2] = 'V';
@@ -613,7 +610,7 @@ void init_wave_header(wave_header_t *header, int wavSize) {
     header->data_tag[1] = 'a';
     header->data_tag[2] = 't';
     header->data_tag[3] = 'a';
-    header->data_length = wavSize;
+    header->data_length = 0; // This needs to be filled in later
 }
 
 void i2s_adc_data_scale(uint8_t *d_buff, uint8_t *s_buff, uint32_t len) {
@@ -637,7 +634,12 @@ bool start_recording(const std::string &filename) {
     }
 
     wave_header_t header;
-    init_wave_header(&header, flash_record_size);
+    init_wave_header(&header);
+
+    unsigned int fileSize = flash_record_size + headerSize - 8;
+    header.riff_length = fileSize;
+    header.data_length = flash_record_size;
+
     dataFile.write((uint8_t *)&header, sizeof(header));
 
     esp_err_t err;
