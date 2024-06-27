@@ -279,7 +279,41 @@ void setup() {
     // }
 
     // i2s_running = true;
-    // // Serial.println("I2S setup complete and running");
+
+    esp_err_t err;
+
+    const i2s_config_t i2s_config = {
+
+        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX), // Receive, not transfer
+        .sample_rate = I2S_SAMPLE_RATE,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // could only get it to work with 32bits
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
+        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
+
+        .dma_buf_count = 32,
+        .dma_buf_len = 1024,
+        .use_apll = 1};
+
+    const i2s_pin_config_t pin_config = {
+        .bck_io_num = 42, .ws_io_num = 41, .data_out_num = I2S_PIN_NO_CHANGE, .data_in_num = 40};
+
+    err = i2s_driver_install(I2S_PORT_MIC, &i2s_config, 0, NULL);
+    if (err != ESP_OK) {
+        Serial.printf("Failed installing driver: %d\n", err, ESP_ERR_INVALID_ARG);
+        return;
+    }
+
+    REG_SET_BIT(I2S_RX_TIMING_REG(I2S_PORT_MIC), BIT(0));
+    REG_SET_BIT(I2S_RX_CONF1_REG(I2S_PORT_MIC), I2S_RX_MSB_SHIFT);
+
+    err = i2s_set_pin(I2S_PORT_MIC, &pin_config);
+    if (err != ESP_OK) {
+        Serial.printf("Failed setting pin: %d\n", err);
+        return;
+    }
+
+    Serial.println("I2S setup complete and running");
 }
 
 void write_next_note_to_audio_buf() {
@@ -641,43 +675,6 @@ bool start_recording(const std::string &filename) {
     header.data_length = flash_record_size;
 
     dataFile.write((uint8_t *)&header, sizeof(header));
-
-    esp_err_t err;
-
-    const i2s_config_t i2s_config = {
-
-        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX), // Receive, not transfer
-        .sample_rate = I2S_SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // could only get it to work with 32bits
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
-        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
-
-        .dma_buf_count = 32,
-        .dma_buf_len = 1024,
-        .use_apll = 1};
-
-    const i2s_pin_config_t pin_config = {
-        .bck_io_num = 42, .ws_io_num = 41, .data_out_num = I2S_PIN_NO_CHANGE, .data_in_num = 40};
-
-    err = i2s_driver_install(I2S_PORT_MIC, &i2s_config, 0, NULL);
-    if (err != ESP_OK) {
-        while (true) {
-            Serial.printf("Failed installing driver: %d\n", err, ESP_ERR_INVALID_ARG);
-        }
-    }
-
-    REG_SET_BIT(I2S_RX_TIMING_REG(I2S_PORT_MIC), BIT(0));
-    REG_SET_BIT(I2S_RX_CONF1_REG(I2S_PORT_MIC), I2S_RX_MSB_SHIFT);
-
-    err = i2s_set_pin(I2S_PORT_MIC, &pin_config);
-    if (err != ESP_OK) {
-        Serial.printf("Failed setting pin: %d\n", err);
-        while (true)
-            ;
-    }
-
-    Serial.println("I2S driver installed.");
 
     int i2s_read_len = I2S_READ_LEN;
     int flash_wr_size = 0;
