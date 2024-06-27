@@ -166,6 +166,21 @@ class YBoardV3 {
      */
     bool is_audio_playing();
 
+    ////////////////////////////// Microphone ////////////////////////////////////////
+    /*
+     *  This function starts recording audio from the microphone. The filename is a
+     * string representing the name of the file to save the recording to. The return
+     * type is a boolean value (true or false). True corresponds to the recording
+     * starting successfully, and false corresponds to an error starting the recording.
+     * The recording will continue until stop_recording is called.
+     */
+    bool start_recording(const std::string &filename);
+
+    /*
+     *  This function stops recording audio from the microphone.
+     */
+    void stop_recording();
+
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
      *  This function returns whether accelerometer data is available.

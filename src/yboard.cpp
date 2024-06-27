@@ -160,6 +160,13 @@ void YBoardV3::stop_audio() { YAudio::stop(); }
 
 bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
+////////////////////////////// Microphone ////////////////////////////////////////
+bool YBoardV3::start_recording(const std::string &filename) {
+    return YAudio::start_recording(filename);
+}
+
+void YBoardV3::stop_recording() { YAudio::stop_recording(); }
+
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {
     if (!wire_begin) {
