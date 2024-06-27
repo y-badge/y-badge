@@ -13,6 +13,23 @@ namespace YAudio {
 #define I2S_CHANNEL_NUM (1)
 const i2s_port_t I2S_PORT_MIC = I2S_NUM_1;
 
+// Wave header as struct
+typedef struct {
+    char riff_tag[4];
+    uint32_t riff_length;
+    char wave_tag[4];
+    char fmt_tag[4];
+    uint32_t fmt_length;
+    uint16_t audio_format;
+    uint16_t num_channels;
+    uint32_t sample_rate;
+    uint32_t byte_rate;
+    uint16_t block_align;
+    uint16_t bits_per_sample;
+    char data_tag[4];
+    uint32_t data_length;
+} wave_header_t;
+
 ///////////////////////////////// Configuration Constants //////////////////////
 i2s_port_t I2S_PORT = I2S_NUM_0;
 
@@ -568,54 +585,35 @@ bool play_sound_file(const std::string &filename) {
     return true;
 }
 
-void wavHeader(byte *header, int wavSize) {
+void init_wave_header(wave_header_t *header, int wavSize) {
     const int headerSize = 44;
-
-    header[0] = 'R';
-    header[1] = 'I';
-    header[2] = 'F';
-    header[3] = 'F';
     unsigned int fileSize = wavSize + headerSize - 8;
-    header[4] = (byte)(fileSize & 0xFF);
-    header[5] = (byte)((fileSize >> 8) & 0xFF);
-    header[6] = (byte)((fileSize >> 16) & 0xFF);
-    header[7] = (byte)((fileSize >> 24) & 0xFF);
-    header[8] = 'W';
-    header[9] = 'A';
-    header[10] = 'V';
-    header[11] = 'E';
-    header[12] = 'f';
-    header[13] = 'm';
-    header[14] = 't';
-    header[15] = ' ';
-    header[16] = 0x10;
-    header[17] = 0x00;
-    header[18] = 0x00;
-    header[19] = 0x00;
-    header[20] = 0x01;
-    header[21] = 0x00;
-    header[22] = 0x01;
-    header[23] = 0x00;
-    header[24] = 0x80;
-    header[25] = 0x3E;
-    header[26] = 0x00;
-    header[27] = 0x00;
-    header[28] = 0x00;
-    header[29] = 0xFA;
-    header[30] = 0x00;
-    header[31] = 0x00;
-    header[32] = 0x04;
-    header[33] = 0x00;
-    header[34] = 0x20;
-    header[35] = 0x00;
-    header[36] = 'd';
-    header[37] = 'a';
-    header[38] = 't';
-    header[39] = 'a';
-    header[40] = (byte)(wavSize & 0xFF);
-    header[41] = (byte)((wavSize >> 8) & 0xFF);
-    header[42] = (byte)((wavSize >> 16) & 0xFF);
-    header[43] = (byte)((wavSize >> 24) & 0xFF);
+
+    header->riff_tag[0] = 'R';
+    header->riff_tag[1] = 'I';
+    header->riff_tag[2] = 'F';
+    header->riff_tag[3] = 'F';
+    header->riff_length = fileSize;
+    header->wave_tag[0] = 'W';
+    header->wave_tag[1] = 'A';
+    header->wave_tag[2] = 'V';
+    header->wave_tag[3] = 'E';
+    header->fmt_tag[0] = 'f';
+    header->fmt_tag[1] = 'm';
+    header->fmt_tag[2] = 't';
+    header->fmt_tag[3] = ' ';
+    header->fmt_length = 16;
+    header->audio_format = 1;
+    header->num_channels = 1;
+    header->sample_rate = 16000;
+    header->byte_rate = 64000;
+    header->block_align = 4;
+    header->bits_per_sample = 32;
+    header->data_tag[0] = 'd';
+    header->data_tag[1] = 'a';
+    header->data_tag[2] = 't';
+    header->data_tag[3] = 'a';
+    header->data_length = wavSize;
 }
 
 void i2s_adc_data_scale(uint8_t *d_buff, uint8_t *s_buff, uint32_t len) {
@@ -632,20 +630,15 @@ bool start_recording(const std::string &filename) {
     int flash_record_size = I2S_CHANNEL_NUM * I2S_SAMPLE_RATE * I2S_SAMPLE_BITS / 8 * 5;
     const int headerSize = 44;
 
-    SD.exists("/recordings") || SD.mkdir("/recordings");
-    std::string filepath = "/recordings/" + filename + ".wav";
-    File dataFile = SD.open(filepath.c_str(), FILE_WRITE);
-    if (dataFile) {
-        Serial.println("File opened successfully");
-    } else {
-        while (true) {
-            Serial.println("error opening/creating file");
-        }
+    File dataFile = SD.open(filename.c_str(), FILE_WRITE);
+    if (!dataFile) {
+        Serial.println("Error opening/creating file for recording.");
+        return false;
     }
 
-    byte header[headerSize];
-    wavHeader(header, flash_record_size);
-    dataFile.write(header, headerSize);
+    wave_header_t header;
+    init_wave_header(&header, flash_record_size);
+    dataFile.write((uint8_t *)&header, sizeof(header));
 
     esp_err_t err;
 
