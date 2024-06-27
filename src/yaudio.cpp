@@ -647,16 +647,6 @@ void init_wave_header(wave_header_t *header) {
     header->data_length = 0; // This needs to be filled in later
 }
 
-void i2s_adc_data_scale(uint8_t *d_buff, uint8_t *s_buff, uint32_t len) {
-    uint32_t j = 0;
-    uint32_t dac_value = 0;
-    for (int i = 0; i < len; i += 2) {
-        dac_value = ((((uint16_t)(s_buff[i + 1] & 0xf) << 8) | ((s_buff[i + 0]))));
-        d_buff[j++] = 0;
-        d_buff[j++] = dac_value * 256 / 2048;
-    }
-}
-
 bool start_recording(const std::string &filename) {
     int flash_record_size = I2S_CHANNEL_NUM * I2S_SAMPLE_RATE * I2S_SAMPLE_BITS / 8 * 5;
     const int headerSize = 44;
@@ -681,9 +671,8 @@ bool start_recording(const std::string &filename) {
     size_t bytes_read;
 
     char *i2s_read_buff = (char *)calloc(i2s_read_len, sizeof(char));
-    uint8_t *flash_write_buff = (uint8_t *)calloc(i2s_read_len, sizeof(char));
 
-    if (i2s_read_buff == NULL || flash_write_buff == NULL) {
+    if (i2s_read_buff == NULL) {
         Serial.println("Failed to allocate memory for buffers");
         return false;
     }
@@ -694,8 +683,6 @@ bool start_recording(const std::string &filename) {
     Serial.println(" *** Recording Start *** ");
     while (flash_wr_size < flash_record_size) {
         i2s_read(I2S_PORT_MIC, (void *)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-        i2s_adc_data_scale(flash_write_buff, (uint8_t *)i2s_read_buff, i2s_read_len);
-        // display_buf((uint8_t *)i2s_read_buff, 64);
 
         if (dataFile.write((const byte *)i2s_read_buff, i2s_read_len) != i2s_read_len) {
             Serial.println("Failed to write data to file");
@@ -710,7 +697,6 @@ bool start_recording(const std::string &filename) {
     Serial.println(" *** Recording End *** ");
 
     free(i2s_read_buff);
-    free(flash_write_buff);
 
     Serial.println("Audio recorded.");
 
