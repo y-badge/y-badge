@@ -32,6 +32,11 @@ typedef struct {
 
 uint8_t i2s_read_buff[I2S_READ_LEN];
 
+bool recording_audio = false;
+bool done_recording_audio = true;
+File dataFile;
+wave_header_t header;
+
 ///////////////////////////////// Configuration Constants //////////////////////
 i2s_port_t I2S_PORT = I2S_NUM_0;
 
@@ -650,51 +655,77 @@ void init_wave_header(wave_header_t *header) {
 }
 
 bool start_recording(const std::string &filename) {
+    if (recording_audio) {
+        Serial.println("Already recording audio");
+        return false;
+    }
+
     int flash_record_size = I2S_CHANNEL_NUM * I2S_SAMPLE_RATE * I2S_SAMPLE_BITS / 8 * 5;
     const int headerSize = 44;
 
-    File dataFile = SD.open(filename.c_str(), FILE_WRITE);
+    dataFile = SD.open(filename.c_str(), FILE_WRITE);
     if (!dataFile) {
         Serial.println("Error opening/creating file for recording.");
         return false;
     }
 
-    wave_header_t header;
     init_wave_header(&header);
-
-    unsigned int fileSize = flash_record_size + headerSize - 8;
-    header.riff_length = fileSize;
-    header.data_length = flash_record_size;
 
     dataFile.write((uint8_t *)&header, sizeof(header));
 
-    int flash_wr_size = 0;
+    // Clear out the buffer before we start recording
     size_t bytes_read;
-
     i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
     i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
 
-    Serial.println(" *** Recording Start *** ");
-    while (flash_wr_size < flash_record_size) {
-        i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
+    recording_audio = true;
+    done_recording_audio = false;
 
-        if (dataFile.write(i2s_read_buff, bytes_read) != bytes_read) {
-            Serial.println("Failed to write data to file");
-            break;
-        }
+    xTaskCreate(
+        [](void *arg) {
+            int total_bytes_read = 0;
+            size_t bytes_read;
 
-        flash_wr_size += bytes_read;
-        ets_printf("Sound recording %u%%\n", flash_wr_size * 100 / flash_record_size);
-    }
+            Serial.println(" *** Recording Start *** ");
+            while (recording_audio) {
+                i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
 
-    dataFile.close();
-    Serial.println(" *** Recording End *** ");
+                if (dataFile.write(i2s_read_buff, bytes_read) != bytes_read) {
+                    Serial.println("Failed to write data to file");
+                    break;
+                }
 
-    Serial.println("Audio recorded.");
+                total_bytes_read += bytes_read;
+                Serial.println("Recording audio...");
+            }
 
-    return false;
+            // Write file size to header
+            unsigned int fileSize = total_bytes_read + headerSize - 8; // TODO: why is there 8?
+            header.riff_length = fileSize;
+            header.data_length = total_bytes_read;
+
+            dataFile.seek(0);
+            dataFile.write((uint8_t *)&header, sizeof(header));
+            dataFile.close();
+
+            done_recording_audio = true;
+
+            // This task is done so delete itself
+            vTaskDelete(NULL);
+        },
+        "recording_audio", 4096, NULL, 1, NULL);
+
+    return true;
 }
 
-void stop_recording() {}
+void stop_recording() {
+    // Notify the other task it should be done
+    recording_audio = false;
+
+    // Wait for other task to finish
+    while (!done_recording_audio) {
+        delay(100);
+    }
+}
 
 }; // namespace YAudio
