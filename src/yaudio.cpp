@@ -668,23 +668,22 @@ bool start_recording(const std::string &filename) {
 
     dataFile.write((uint8_t *)&header, sizeof(header));
 
-    int i2s_read_len = I2S_READ_LEN;
     int flash_wr_size = 0;
     size_t bytes_read;
 
-    i2s_read(I2S_PORT_MIC, i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_read(I2S_PORT_MIC, i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+    i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
+    i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
 
     Serial.println(" *** Recording Start *** ");
     while (flash_wr_size < flash_record_size) {
-        i2s_read(I2S_PORT_MIC, i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+        i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
 
-        if (dataFile.write(i2s_read_buff, i2s_read_len) != i2s_read_len) {
+        if (dataFile.write(i2s_read_buff, bytes_read) != bytes_read) {
             Serial.println("Failed to write data to file");
             break;
         }
 
-        flash_wr_size += i2s_read_len;
+        flash_wr_size += bytes_read;
         ets_printf("Sound recording %u%%\n", flash_wr_size * 100 / flash_record_size);
     }
 
