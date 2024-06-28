@@ -37,7 +37,7 @@ bool done_recording_audio = true;
 File recording_file;
 
 ///////////////////////////////// Configuration Constants //////////////////////
-i2s_port_t I2S_PORT = I2S_NUM_0;
+i2s_port_t I2S_PORT_SPEAKER = I2S_NUM_0;
 
 // The number of bits per sample.
 static const int BITS_PER_SAMPLE = 16;
@@ -136,7 +136,7 @@ void start_i2s() {
     if (i2s_running) {
         return;
     }
-    i2s_start(I2S_PORT);
+    i2s_start(I2S_PORT_SPEAKER);
     i2s_running = true;
 }
 
@@ -217,7 +217,7 @@ void I2Sout(void *params) {
         if (TXdoneEvent) {
             if (audio_buf_num_populated_frames >= 0) {
                 size_t bytes_written;
-                i2s_write(I2S_PORT, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
+                i2s_write(I2S_PORT_SPEAKER, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
                           FRAME_SIZE * BYTES_PER_SAMPLE, &bytes_written, portMAX_DELAY);
 
                 audio_buf_frame_idx_to_send =
@@ -244,51 +244,49 @@ void reset_audio_buf() {
 }
 
 void setup() {
-    // // Initialize global variables
-    // reset_audio_buf();
-    // set_note_defaults();
-    // i2s_running = false;
-    // notes_running = false;
-    // wave_running = false;
-    // volume_wave = 5;
+    esp_err_t err;
 
-    // const i2s_config_t i2s_config = {
-    //     .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX), // Receive, not transfer
-    //     .sample_rate = SAMPLE_RATE,
-    //     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, // could only get it to work with 32bits
-    //     .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
-    //     .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
-    //     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
+    // Initialize global variables
+    reset_audio_buf();
+    set_note_defaults();
+    i2s_running = false;
+    notes_running = false;
+    wave_running = false;
+    volume_wave = 5;
 
-    //     .dma_buf_count = 2,
-    //     .dma_buf_len = 1024,
-    //     .use_apll = 0};
+    const i2s_config_t i2s_config_speaker = {
+        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX), // Receive, not transfer
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, // could only get it to work with 32bits
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
+        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
 
-    // const i2s_pin_config_t pin_config = {
-    //     .bck_io_num = 21, .ws_io_num = 47, .data_out_num = 14, .data_in_num = I2S_PIN_NO_CHANGE};
+        .dma_buf_count = 2,
+        .dma_buf_len = 1024,
+        .use_apll = 0};
 
-    // int err;
+    const i2s_pin_config_t pin_config_speaker = {
+        .bck_io_num = 21, .ws_io_num = 47, .data_out_num = 14, .data_in_num = I2S_PIN_NO_CHANGE};
 
-    // err = i2s_driver_install(I2S_PORT, &i2s_config, I2S_Q_LEN, &i2s_event_queue);
-    // if (err != ESP_OK) {
-    //     Serial.printf("Failed installing I2S driver: %d\n", err);
-    //     return;
-    // }
+    err = i2s_driver_install(I2S_PORT_SPEAKER, &i2s_config_speaker, I2S_Q_LEN, &i2s_event_queue);
+    if (err != ESP_OK) {
+        Serial.printf("Failed installing I2S driver: %d\n", err);
+        return;
+    }
 
     // TaskHandle_t I2StaskHandle;
     // xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, &I2StaskHandle);
 
-    // err = i2s_set_pin(I2S_PORT, &pin_config);
-    // if (err != ESP_OK) {
-    //     Serial.printf("Failed setting I2S pin configuration: %d\n", err);
-    //     return;
-    // }
+    err = i2s_set_pin(I2S_PORT_SPEAKER, &pin_config_speaker);
+    if (err != ESP_OK) {
+        Serial.printf("Failed setting I2S pin configuration: %d\n", err);
+        return;
+    }
 
-    // i2s_running = true;
+    i2s_running = true;
 
-    esp_err_t err;
-
-    const i2s_config_t i2s_config = {
+    const i2s_config_t i2s_config_mic = {
 
         .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX), // Receive, not transfer
         .sample_rate = I2S_SAMPLE_RATE,
@@ -301,10 +299,10 @@ void setup() {
         .dma_buf_len = 1024,
         .use_apll = 1};
 
-    const i2s_pin_config_t pin_config = {
+    const i2s_pin_config_t pin_config_mic = {
         .bck_io_num = 42, .ws_io_num = 41, .data_out_num = I2S_PIN_NO_CHANGE, .data_in_num = 40};
 
-    err = i2s_driver_install(I2S_PORT_MIC, &i2s_config, 0, NULL);
+    err = i2s_driver_install(I2S_PORT_MIC, &i2s_config_mic, 0, NULL);
     if (err != ESP_OK) {
         Serial.printf("Failed installing driver: %d\n", err);
         return;
@@ -313,7 +311,7 @@ void setup() {
     REG_SET_BIT(I2S_RX_TIMING_REG(I2S_PORT_MIC), BIT(0));
     REG_SET_BIT(I2S_RX_CONF1_REG(I2S_PORT_MIC), I2S_RX_MSB_SHIFT);
 
-    err = i2s_set_pin(I2S_PORT_MIC, &pin_config);
+    err = i2s_set_pin(I2S_PORT_MIC, &pin_config_mic);
     if (err != ESP_OK) {
         Serial.printf("Failed setting pin: %d\n", err);
         return;
@@ -573,7 +571,7 @@ void set_wave_volume(uint8_t new_volume) { volume_wave = new_volume > 10 ? 10 : 
 
 void stop() {
     if (i2s_running) {
-        i2s_stop(I2S_PORT);
+        i2s_stop(I2S_PORT_SPEAKER);
         i2s_running = false;
     }
     if (wave_running) {
@@ -584,7 +582,7 @@ void stop() {
         notes_running = false;
         notes = "";
     }
-    i2s_zero_dma_buffer(I2S_PORT);
+    i2s_zero_dma_buffer(I2S_PORT_SPEAKER);
     reset_audio_buf();
 }
 
