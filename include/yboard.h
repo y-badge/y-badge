@@ -247,8 +247,10 @@ class YBoardV3 {
     void setup_switches();
     void setup_buttons();
     bool setup_speaker();
+    bool setup_mic();
     bool setup_accelerometer();
     bool setup_temperature();
+    bool setup_sd_card();
 };
 
 extern YBoardV3 Yboard;

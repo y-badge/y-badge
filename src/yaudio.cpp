@@ -243,7 +243,7 @@ void reset_audio_buf() {
     notes = "";
 }
 
-void setup() {
+bool setup_speaker() {
     esp_err_t err;
 
     // Initialize global variables
@@ -272,19 +272,25 @@ void setup() {
     err = i2s_driver_install(I2S_PORT_SPEAKER, &i2s_config_speaker, I2S_Q_LEN, &i2s_event_queue);
     if (err != ESP_OK) {
         Serial.printf("Failed installing I2S driver: %d\n", err);
-        return;
+        return false;
     }
 
-    // TaskHandle_t I2StaskHandle;
-    // xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, &I2StaskHandle);
+    // xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, NULL);
 
     err = i2s_set_pin(I2S_PORT_SPEAKER, &pin_config_speaker);
     if (err != ESP_OK) {
         Serial.printf("Failed setting I2S pin configuration: %d\n", err);
-        return;
+        return false;
     }
 
     i2s_running = true;
+
+    Serial.println("I2S setup complete and running for speaker");
+    return true;
+}
+
+bool setup_mic() {
+    esp_err_t err;
 
     const i2s_config_t i2s_config_mic = {
 
@@ -305,7 +311,7 @@ void setup() {
     err = i2s_driver_install(I2S_PORT_MIC, &i2s_config_mic, 0, NULL);
     if (err != ESP_OK) {
         Serial.printf("Failed installing driver: %d\n", err);
-        return;
+        return false;
     }
 
     REG_SET_BIT(I2S_RX_TIMING_REG(I2S_PORT_MIC), BIT(0));
@@ -314,10 +320,11 @@ void setup() {
     err = i2s_set_pin(I2S_PORT_MIC, &pin_config_mic);
     if (err != ESP_OK) {
         Serial.printf("Failed setting pin: %d\n", err);
-        return;
+        return false;
     }
 
-    Serial.println("I2S setup complete and running");
+    Serial.println("I2S setup complete for mic");
+    return true;
 }
 
 void write_next_note_to_audio_buf() {

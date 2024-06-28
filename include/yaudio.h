@@ -6,7 +6,8 @@
 
 namespace YAudio {
 
-void setup();
+bool setup_speaker();
+bool setup_mic();
 void loop();
 void set_wave_volume(uint8_t volume);
 bool add_notes(const std::string &new_notes);

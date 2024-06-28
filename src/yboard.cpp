@@ -10,9 +10,26 @@ void YBoardV3::setup() {
     setup_leds();
     setup_switches();
     setup_buttons();
-    setup_speaker();
-    setup_accelerometer();
-    setup_temperature();
+
+    if (setup_sd_card()) {
+        Serial.println("SD Card Setup: Success");
+    }
+
+    if (setup_speaker()) {
+        Serial.println("Speaker Setup: Success");
+    }
+
+    if (setup_mic()) {
+        Serial.println("Mic Setup: Success");
+    }
+
+    if (setup_accelerometer()) {
+        Serial.println("Accelerometer Setup: Success");
+    }
+
+    if (setup_temperature()) {
+        Serial.println("Temperature Sensor Setup: Success");
+    }
 }
 
 ////////////////////////////// LEDs ///////////////////////////////
@@ -83,26 +100,24 @@ int YBoardV3::get_knob() {
 
 ////////////////////////////// Speaker/Tones //////////////////////////////////
 bool YBoardV3::setup_speaker() {
-    // Set microSD Card CS as OUTPUT and set HIGH
-    pinMode(sd_cs_pin, OUTPUT);
-    digitalWrite(sd_cs_pin, HIGH);
 
-    // Initialize SPI bus for microSD Card
-    SPI.begin(spi_sck_pin, spi_miso_pin, spi_mosi_pin);
-
-    YAudio::setup();
+    if (!YAudio::setup_speaker()) {
+        Serial.println("ERROR: Speaker setup failed.");
+        return false;
+    }
 
     // Set Volume
     YAudio::set_wave_volume(5);
 
-    // Start microSD Card
-    if (!SD.begin(sd_cs_pin)) {
-        Serial.println("Error accessing microSD card!");
-        sd_card_present = false;
+    return true;
+}
+
+bool YBoardV3::setup_mic() {
+    if (!YAudio::setup_mic()) {
+        Serial.println("ERROR: Mic setup failed.");
         return false;
     }
 
-    sd_card_present = true;
     return true;
 }
 
@@ -216,4 +231,24 @@ temperature_data YBoardV3::get_temperature() {
     data.humidity = h.relative_humidity;
 
     return data;
+}
+
+bool YBoardV3::setup_sd_card() {
+    // Set microSD Card CS as OUTPUT and set HIGH
+    pinMode(sd_cs_pin, OUTPUT);
+    digitalWrite(sd_cs_pin, HIGH);
+
+    // Initialize SPI bus for microSD Card
+    SPI.begin(spi_sck_pin, spi_miso_pin, spi_mosi_pin);
+
+    // Start microSD Card
+    if (!SD.begin(sd_cs_pin)) {
+        Serial.println("Error accessing microSD card!");
+        sd_card_present = false;
+        return false;
+    }
+
+    sd_card_present = true;
+
+    return true;
 }
