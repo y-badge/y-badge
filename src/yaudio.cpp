@@ -625,20 +625,11 @@ bool play_sound_file(const std::string &filename) {
     return true;
 }
 
-void init_wave_header(wave_header_t *header) {
-    header->riff_tag[0] = 'R';
-    header->riff_tag[1] = 'I';
-    header->riff_tag[2] = 'F';
-    header->riff_tag[3] = 'F';
-    header->riff_length = 0; // This needs to be filled in later
-    header->wave_tag[0] = 'W';
-    header->wave_tag[1] = 'A';
-    header->wave_tag[2] = 'V';
-    header->wave_tag[3] = 'E';
-    header->fmt_tag[0] = 'f';
-    header->fmt_tag[1] = 'm';
-    header->fmt_tag[2] = 't';
-    header->fmt_tag[3] = ' ';
+void create_wave_header(wave_header_t *header, int data_length) {
+    memcpy(header->riff_tag, "RIFF", 4);
+    header->riff_length = data_length + sizeof(header) - 8; // TODO: why is there 8?
+    memcpy(header->wave_tag, "WAVE", 4);
+    memcpy(header->fmt_tag, "fmt ", 4);
     header->fmt_length = 16;
     header->audio_format = 1;
     header->num_channels = 1;
@@ -646,11 +637,8 @@ void init_wave_header(wave_header_t *header) {
     header->byte_rate = 64000;
     header->block_align = 4;
     header->bits_per_sample = 32;
-    header->data_tag[0] = 'd';
-    header->data_tag[1] = 'a';
-    header->data_tag[2] = 't';
-    header->data_tag[3] = 'a';
-    header->data_length = 0; // This needs to be filled in later
+    memcpy(header->data_tag, "data", 4);
+    header->data_length = data_length;
 }
 
 bool start_recording(const std::string &filename) {
@@ -704,9 +692,7 @@ bool start_recording(const std::string &filename) {
             }
 
             // Fill in the header
-            init_wave_header(&header);
-            header.riff_length = total_bytes_read + sizeof(header) - 8; // TODO: why is there 8?
-            header.data_length = total_bytes_read;
+            create_wave_header(&header, total_bytes_read);
 
             // Go back to the beginning of the file so we can write the header
             recording_file.seek(0);
