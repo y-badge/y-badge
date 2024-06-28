@@ -681,16 +681,17 @@ bool start_recording(const std::string &filename) {
             size_t bytes_read = 0;
             wave_header_t header;
 
-            // Fill in the header with WAV format information
-            init_wave_header(&header);
-
-            // Write it to the disk
-            recording_file.write((uint8_t *)&header, sizeof(header));
+            // Skip over the header for now
+            recording_file.seek(sizeof(header));
 
             Serial.println(" *** Recording Start *** ");
             while (recording_audio) {
-                // Read in an audio sameple
-                i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
+                // Read in an audio sample
+                if (i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read,
+                             portMAX_DELAY) != ESP_OK) {
+                    Serial.println("Failed to read data from I2S");
+                    break;
+                }
 
                 // Write it to the file
                 if (recording_file.write(i2s_read_buff, bytes_read) != bytes_read) {
@@ -702,12 +703,15 @@ bool start_recording(const std::string &filename) {
                 Serial.println("Recording audio...");
             }
 
-            // Write file size to header
-            unsigned int fileSize = total_bytes_read + sizeof(header) - 8; // TODO: why is there 8?
-            header.riff_length = fileSize;
+            // Fill in the header
+            init_wave_header(&header);
+            header.riff_length = total_bytes_read + sizeof(header) - 8; // TODO: why is there 8?
             header.data_length = total_bytes_read;
 
+            // Go back to the beginning of the file so we can write the header
             recording_file.seek(0);
+
+            // Write the header to the disk
             recording_file.write((uint8_t *)&header, sizeof(header));
             recording_file.close();
 
