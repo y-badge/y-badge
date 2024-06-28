@@ -271,7 +271,7 @@ void setup() {
 
     // err = i2s_driver_install(I2S_PORT, &i2s_config, I2S_Q_LEN, &i2s_event_queue);
     // if (err != ESP_OK) {
-    //     Serial.printf("Failed installing I2S driver: %d (%d)\n", err, ESP_ERR_INVALID_STATE);
+    //     Serial.printf("Failed installing I2S driver: %d\n", err);
     //     return;
     // }
 
@@ -306,7 +306,7 @@ void setup() {
 
     err = i2s_driver_install(I2S_PORT_MIC, &i2s_config, 0, NULL);
     if (err != ESP_OK) {
-        Serial.printf("Failed installing driver: %d\n", err, ESP_ERR_INVALID_ARG);
+        Serial.printf("Failed installing driver: %d\n", err);
         return;
     }
 
