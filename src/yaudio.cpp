@@ -7,10 +7,11 @@
 
 namespace YAudio {
 
-#define I2S_SAMPLE_RATE (16000)
-#define I2S_SAMPLE_BITS (32)
-#define I2S_READ_LEN (32 * 1024)
-#define I2S_CHANNEL_NUM (1)
+// TODO: Rename these to include mic
+#define I2S_SAMPLE_RATE 16000
+#define I2S_SAMPLE_BITS 32
+#define I2S_READ_LEN 8192
+#define I2S_CHANNEL_NUM 1
 const i2s_port_t I2S_PORT_MIC = I2S_NUM_1;
 
 // Wave header as struct
@@ -636,6 +637,7 @@ bool play_sound_file(const std::string &filename) {
     return true;
 }
 
+// TODO: Move this because it is private
 void create_wave_header(wave_header_t *header, int data_length) {
     memcpy(header->riff_tag, "RIFF", 4);
     header->riff_length = data_length + sizeof(header) - 8; // TODO: why is there 8?
@@ -652,6 +654,7 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->data_length = data_length;
 }
 
+// TODO: Move this because it is private
 void convert_32_to_16(int16_t *dest, int32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
         dest[i] = src[i] >> 16;
