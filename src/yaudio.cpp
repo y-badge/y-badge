@@ -623,6 +623,13 @@ bool play_sound_file(const std::string &filename) {
         return false;
     }
 
+    if (header.bits_per_sample != BITS_PER_SAMPLE) {
+        Serial.printf("This file has %d bits per sample. Only %d bits per sample is supported\n",
+                      header.bits_per_sample, BITS_PER_SAMPLE);
+        file.close();
+        return false;
+    }
+
     start_i2s();
     wave_running = true;
     return true;
