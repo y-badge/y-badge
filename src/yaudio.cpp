@@ -8,10 +8,11 @@
 namespace YAudio {
 
 // TODO: Rename these to include mic
-#define I2S_SAMPLE_RATE 16000
-#define I2S_SAMPLE_BITS 32
-#define I2S_READ_LEN 8192
-#define I2S_CHANNEL_NUM 1
+static const int MIC_SAMPLE_RATE = 16000;
+static const int MIC_ORIGINAL_SAMPLE_BITS = 32;
+static const int MIC_CONVERTED_SAMPLE_BITS = 16;
+static const int MIC_READ_BUF_SIZE = 2048;
+static const int MIC_NUM_CHANNELS = 1;
 const i2s_port_t I2S_PORT_MIC = I2S_NUM_1;
 
 // Wave header as struct
@@ -31,8 +32,8 @@ typedef struct {
     uint32_t data_length;
 } wave_header_t;
 
-uint8_t i2s_read_buff[I2S_READ_LEN];
-uint8_t file_write_buff[I2S_READ_LEN];
+uint32_t i2s_read_buff[MIC_READ_BUF_SIZE];
+uint16_t file_write_buff[MIC_READ_BUF_SIZE];
 
 bool recording_audio = false;
 bool done_recording_audio = true;
@@ -297,7 +298,7 @@ bool setup_mic() {
     const i2s_config_t i2s_config_mic = {
 
         .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX), // Receive, not transfer
-        .sample_rate = I2S_SAMPLE_RATE,
+        .sample_rate = MIC_SAMPLE_RATE,
         .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // could only get it to work with 32bits
         .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
         .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
@@ -645,17 +646,17 @@ void create_wave_header(wave_header_t *header, int data_length) {
     memcpy(header->fmt_tag, "fmt ", 4);
     header->fmt_length = 16;
     header->audio_format = 1;
-    header->num_channels = 1;
-    header->sample_rate = 16000;
-    header->byte_rate = 32000;
+    header->num_channels = MIC_NUM_CHANNELS;
+    header->sample_rate = MIC_SAMPLE_RATE;
+    header->byte_rate = MIC_SAMPLE_RATE * (MIC_CONVERTED_SAMPLE_BITS / 8) * MIC_NUM_CHANNELS;
     header->block_align = 4;
-    header->bits_per_sample = 16;
+    header->bits_per_sample = MIC_CONVERTED_SAMPLE_BITS;
     memcpy(header->data_tag, "data", 4);
     header->data_length = data_length;
 }
 
 // TODO: Move this because it is private
-void convert_32_to_16(int16_t *dest, int32_t *src, int num_samples) {
+void convert_32_to_16(uint16_t *dest, uint32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
         dest[i] = src[i] >> 16;
     }
@@ -675,8 +676,8 @@ bool start_recording(const std::string &filename) {
 
     // Clear out the buffer before we start recording
     size_t bytes_read;
-    i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
-    i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read, portMAX_DELAY);
+    i2s_read(I2S_PORT_MIC, i2s_read_buff, MIC_READ_BUF_SIZE, &bytes_read, portMAX_DELAY);
+    i2s_read(I2S_PORT_MIC, i2s_read_buff, MIC_READ_BUF_SIZE, &bytes_read, portMAX_DELAY);
 
     // Set up initial state
     recording_audio = true;
@@ -695,20 +696,19 @@ bool start_recording(const std::string &filename) {
             Serial.println(" *** Recording Start *** ");
             while (recording_audio) {
                 // Read in an audio sample
-                if (i2s_read(I2S_PORT_MIC, i2s_read_buff, I2S_READ_LEN, &bytes_read,
+                if (i2s_read(I2S_PORT_MIC, i2s_read_buff, MIC_READ_BUF_SIZE, &bytes_read,
                              portMAX_DELAY) != ESP_OK) {
                     Serial.println("Failed to read data from I2S");
                     break;
                 }
 
-                Serial.printf("Read %d bytes\n", bytes_read);
-
                 // Convert the 32-bit samples to 16-bit samples
-                convert_32_to_16((int16_t *)file_write_buff, (int32_t *)i2s_read_buff,
-                                 bytes_read / 4);
+                convert_32_to_16(file_write_buff, i2s_read_buff, bytes_read / 4);
+                int bytes_to_write = bytes_read / 2;
 
                 // Write it to the file
-                if (recording_file.write(file_write_buff, bytes_read / 2) != bytes_read / 2) {
+                if (recording_file.write((uint8_t *)file_write_buff, bytes_to_write) !=
+                    bytes_to_write) {
                     Serial.println("Failed to write data to file");
                     break;
                 }
