@@ -181,6 +181,11 @@ class YBoardV3 {
      */
     void stop_recording();
 
+    /*
+     *  This function returns whether the microphone is currently recording.
+     */
+    bool is_recording();
+
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
      *  This function returns whether accelerometer data is available.

@@ -171,7 +171,7 @@ bool YBoardV3::play_notes(const std::string &notes) {
 
 bool YBoardV3::play_notes_background(const std::string &notes) { return YAudio::add_notes(notes); }
 
-void YBoardV3::stop_audio() { YAudio::stop(); }
+void YBoardV3::stop_audio() { YAudio::stop_speaker(); }
 
 bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
@@ -181,6 +181,8 @@ bool YBoardV3::start_recording(const std::string &filename) {
 }
 
 void YBoardV3::stop_recording() { YAudio::stop_recording(); }
+
+bool YBoardV3::is_recording() { return YAudio::is_recording(); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {
