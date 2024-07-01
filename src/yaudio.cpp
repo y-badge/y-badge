@@ -31,6 +31,7 @@ typedef struct {
 } wave_header_t;
 
 uint8_t i2s_read_buff[I2S_READ_LEN];
+uint8_t file_write_buff[I2S_READ_LEN];
 
 bool recording_audio = false;
 bool done_recording_audio = true;
@@ -644,11 +645,17 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->audio_format = 1;
     header->num_channels = 1;
     header->sample_rate = 16000;
-    header->byte_rate = 64000;
+    header->byte_rate = 32000;
     header->block_align = 4;
-    header->bits_per_sample = 32;
+    header->bits_per_sample = 16;
     memcpy(header->data_tag, "data", 4);
     header->data_length = data_length;
+}
+
+void convert_32_to_16(int16_t *dest, int32_t *src, int num_samples) {
+    for (int i = 0; i < num_samples; i++) {
+        dest[i] = src[i] >> 16;
+    }
 }
 
 bool start_recording(const std::string &filename) {
@@ -691,8 +698,14 @@ bool start_recording(const std::string &filename) {
                     break;
                 }
 
+                Serial.printf("Read %d bytes\n", bytes_read);
+
+                // Convert the 32-bit samples to 16-bit samples
+                convert_32_to_16((int16_t *)file_write_buff, (int32_t *)i2s_read_buff,
+                                 bytes_read / 4);
+
                 // Write it to the file
-                if (recording_file.write(i2s_read_buff, bytes_read) != bytes_read) {
+                if (recording_file.write(file_write_buff, bytes_read / 2) != bytes_read / 2) {
                     Serial.println("Failed to write data to file");
                     break;
                 }
