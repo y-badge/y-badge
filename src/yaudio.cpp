@@ -275,7 +275,7 @@ bool setup_speaker() {
         return false;
     }
 
-    // xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, NULL);
+    xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, NULL);
 
     err = i2s_set_pin(I2S_PORT_SPEAKER, &pin_config_speaker);
     if (err != ESP_OK) {
@@ -301,7 +301,7 @@ bool setup_mic() {
         .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
 
-        .dma_buf_count = 32,
+        .dma_buf_count = 8,
         .dma_buf_len = 1024,
         .use_apll = 1};
 
