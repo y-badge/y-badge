@@ -109,6 +109,7 @@ static void set_note_defaults();
 static void reset_audio_buf();
 static void start_i2s();
 static void I2Sout(void *params);
+static void loop_task(void *params);
 static void create_wave_header(wave_header_t *header, int data_length);
 static void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples);
 
@@ -146,6 +147,7 @@ bool setup_speaker() {
     }
 
     xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, NULL);
+    xTaskCreate(loop_task, "loop_task", 1024, NULL, 1, NULL);
 
     err = i2s_set_pin(SPEAKER_I2S_PORT, &pin_config_speaker);
     if (err != ESP_OK) {
@@ -471,6 +473,15 @@ void I2Sout(void *params) {
             }
             // Serial.printf("Frame sent. # populated: %d\n", audio_buf_num_populated_frames);
         }
+    }
+}
+
+void loop_task(void *params) {
+    while (true) {
+        if (is_playing()) {
+            loop();
+        }
+        delay(10);
     }
 }
 
