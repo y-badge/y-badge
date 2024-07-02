@@ -500,7 +500,7 @@ void create_wave_header(wave_header_t *header, int data_length) {
 
 void u32_to_u16(uint16_t *dest, const uint32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        dest[i] = src[i] >> 16;
+        dest[i] = (src[i] >> 16) * 12;
     }
 }
 
