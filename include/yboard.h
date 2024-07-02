@@ -186,6 +186,12 @@ class YBoardV3 {
      */
     bool is_recording();
 
+    /*
+     *  This function sets the volume of the microphone when recording. The volume is
+     * an integer between 0 and 12. A volume of 0 is off, and a volume of 12 is full volume.
+     */
+    void set_recording_volume(uint8_t volume);
+
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
      *  This function returns whether accelerometer data is available.

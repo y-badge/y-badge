@@ -38,6 +38,8 @@ static bool recording_audio = false;
 static bool done_recording_audio = true;
 static File speaker_recording_file;
 
+static int recording_volume = 5;
+
 ///////////////////////////////// Configuration Constants //////////////////////
 i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_0;
 
@@ -108,7 +110,7 @@ static void reset_audio_buf();
 static void start_i2s();
 static void I2Sout(void *params);
 static void create_wave_header(wave_header_t *header, int data_length);
-static void u32_to_u16(uint16_t *dest, const uint32_t *src, int num_samples);
+static void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples);
 
 ////////////////////////////// Public Functions ///////////////////////////////
 bool setup_speaker() {
@@ -326,7 +328,7 @@ bool start_recording(const std::string &filename) {
                 }
 
                 // Convert the 32-bit samples to 16-bit samples
-                u32_to_u16(file_write_buff, i2s_read_buff, bytes_read / 4);
+                convert_samples(file_write_buff, i2s_read_buff, bytes_read / 4);
                 int bytes_to_write = bytes_read / 2;
 
                 // Write it to the file
@@ -372,6 +374,10 @@ void stop_recording() {
 }
 
 bool is_recording() { return recording_audio; }
+
+void set_recording_volume(uint8_t new_volume) {
+    recording_volume = new_volume > 12 ? 12 : new_volume;
+}
 
 ////////////////////////////// Private Functions ///////////////////////////////
 
@@ -498,9 +504,9 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->data_length = data_length;
 }
 
-void u32_to_u16(uint16_t *dest, const uint32_t *src, int num_samples) {
+void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        dest[i] = (src[i] >> 16) * 12;
+        dest[i] = (src[i] >> 16) * recording_volume;
     }
 }
 
