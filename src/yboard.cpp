@@ -177,6 +177,17 @@ bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
 ////////////////////////////// Microphone ////////////////////////////////////////
 bool YBoardV3::start_recording(const std::string &filename) {
+    // Prepend filename with a / if it doesn't have one
+    std::string _filename = filename;
+    if (_filename[0] != '/') {
+        _filename.insert(0, "/");
+    }
+
+    if (!sd_card_present) {
+        Serial.println("ERROR: SD Card not present.");
+        return false;
+    }
+
     return YAudio::start_recording(filename);
 }
 
