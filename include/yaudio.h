@@ -17,7 +17,7 @@ bool play_sound_file(const std::string &filename);
 bool start_recording(const std::string &filename);
 void stop_recording();
 bool is_recording();
-void set_recording_volume(uint8_t new_volume);
+void set_recording_gain(uint8_t new_gain);
 }; // namespace YAudio
 
 #endif /* YAUDIO_H */
