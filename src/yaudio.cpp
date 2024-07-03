@@ -460,7 +460,7 @@ void I2Sout(void *params) {
         } while (retv == pdPASS);
 
         if (TXdoneEvent) {
-            if (audio_buf_num_populated_frames >= 0) {
+            if (audio_buf_num_populated_frames > 0) {
                 size_t bytes_written;
                 i2s_write(SPEAKER_I2S_PORT, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
                           FRAME_SIZE * SPEAKER_BYTES_PER_SAMPLE, &bytes_written, portMAX_DELAY);
