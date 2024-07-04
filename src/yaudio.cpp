@@ -147,7 +147,7 @@ bool setup_speaker() {
     }
 
     xTaskCreate(I2Sout, "I2Sout", 20000, NULL, 1, NULL);
-    xTaskCreate(loop_task, "loop_task", 1024, NULL, 1, NULL);
+    xTaskCreate(loop_task, "loop_task", 2048, NULL, 1, NULL);
 
     err = i2s_set_pin(SPEAKER_I2S_PORT, &pin_config_speaker);
     if (err != ESP_OK) {
