@@ -155,8 +155,6 @@ bool setup_speaker() {
         return false;
     }
 
-    // i2s_running = true;
-
     Serial.println("I2S setup complete and running for speaker");
     return true;
 }
