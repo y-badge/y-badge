@@ -155,7 +155,7 @@ bool setup_speaker() {
         return false;
     }
 
-    i2s_running = true;
+    // i2s_running = true;
 
     Serial.println("I2S setup complete and running for speaker");
     return true;
@@ -282,9 +282,7 @@ bool add_notes(const std::string &new_notes) {
     notes += new_notes + "z";
 
     notes_running = true;
-    if (!i2s_running) {
-        start_i2s();
-    }
+    start_i2s();
 
     return true;
 }

@@ -127,7 +127,7 @@ bool YBoardV3::play_sound_file(const std::string &filename) {
     }
 
     while (is_audio_playing()) {
-        YAudio::loop();
+        delay(10);
     }
 
     return true;
