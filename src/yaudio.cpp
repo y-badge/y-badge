@@ -13,6 +13,7 @@ static const int MIC_CONVERTED_SAMPLE_BITS = 16;
 static const int MIC_READ_BUF_SIZE = 2048;
 static const int MIC_NUM_CHANNELS = 1;
 static const i2s_port_t MIC_I2S_PORT = I2S_NUM_1;
+static const int MIC_OFFSET = 2000;
 
 // Wave header as struct
 typedef struct {
@@ -339,7 +340,7 @@ bool start_recording(const std::string &filename) {
                 }
 
                 total_bytes_read += bytes_read;
-                Serial.println("Recording audio...");
+                // Serial.println("Recording audio...");
             }
 
             // Fill in the header
@@ -504,7 +505,8 @@ void create_wave_header(wave_header_t *header, int data_length) {
 
 void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        dest[i] = (src[i] >> 16) * recording_gain;
+        // Convert to 16 bit, add offset, and increase the gain
+        dest[i] = ((src[i] >> 16) + MIC_OFFSET) * recording_gain;
     }
 }
 
