@@ -32,8 +32,8 @@ typedef struct {
     uint32_t data_length;
 } wave_header_t;
 
-uint32_t i2s_read_buff[MIC_READ_BUF_SIZE];
-uint16_t file_write_buff[MIC_READ_BUF_SIZE];
+int32_t i2s_read_buff[MIC_READ_BUF_SIZE];
+int16_t file_write_buff[MIC_READ_BUF_SIZE];
 
 static bool recording_audio = false;
 static bool done_recording_audio = true;
@@ -111,7 +111,7 @@ static void reset_audio_buf();
 static void start_i2s();
 static void I2Sout(void *params);
 static void create_wave_header(wave_header_t *header, int data_length);
-static void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples);
+static void convert_samples(int16_t *dest, const int32_t *src, int num_samples);
 
 ////////////////////////////// Public Functions ///////////////////////////////
 bool setup_speaker() {
@@ -503,7 +503,7 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->data_length = data_length;
 }
 
-void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples) {
+void convert_samples(int16_t *dest, const int32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
         // Convert to 16 bit, add offset, and increase the gain
         dest[i] = ((src[i] >> 16) + MIC_OFFSET) * recording_gain;
