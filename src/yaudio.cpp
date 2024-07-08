@@ -13,7 +13,6 @@ static const int MIC_CONVERTED_SAMPLE_BITS = 16;
 static const int MIC_READ_BUF_SIZE = 2048;
 static const int MIC_NUM_CHANNELS = 1;
 static const i2s_port_t MIC_I2S_PORT = I2S_NUM_1;
-static const int MIC_OFFSET = 2000;
 
 // Wave header as struct
 typedef struct {
@@ -505,9 +504,21 @@ void create_wave_header(wave_header_t *header, int data_length) {
 }
 
 void convert_samples(int16_t *dest, const int32_t *src, int num_samples) {
+    int64_t sum = 0;
     for (int i = 0; i < num_samples; i++) {
-        // Convert to 16 bit, add offset, and increase the gain
-        dest[i] = ((src[i] >> 16) + MIC_OFFSET) * recording_gain;
+        // Convert to 16 bit
+        dest[i] = ((src[i] >> 16));
+
+        // Keep track of total to average later
+        sum += dest[i];
+    }
+
+    // Average the samples
+    int64_t avg = sum / num_samples;
+
+    for (int i = 0; i < num_samples; i++) {
+        dest[i] -= avg;            // Subtract the average from each sample
+        dest[i] *= recording_gain; // Apply the gain
     }
 }
 
