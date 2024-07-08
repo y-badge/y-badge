@@ -329,8 +329,9 @@ bool start_recording(const std::string &filename) {
                 }
 
                 // Convert the 32-bit samples to 16-bit samples
-                convert_samples(file_write_buff, i2s_read_buff, bytes_read / 4);
-                int bytes_to_write = bytes_read / 2;
+                int num_samples = bytes_read / 4;
+                int bytes_to_write = num_samples * 2;
+                convert_samples(file_write_buff, i2s_read_buff, num_samples);
 
                 // Write it to the file
                 if (speaker_recording_file.write((uint8_t *)file_write_buff, bytes_to_write) !=
