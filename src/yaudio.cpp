@@ -31,14 +31,14 @@ typedef struct {
     uint32_t data_length;
 } wave_header_t;
 
-uint32_t i2s_read_buff[MIC_READ_BUF_SIZE];
-uint16_t file_write_buff[MIC_READ_BUF_SIZE];
+int32_t i2s_read_buff[MIC_READ_BUF_SIZE];
+int16_t file_write_buff[MIC_READ_BUF_SIZE];
 
 static bool recording_audio = false;
 static bool done_recording_audio = true;
 static File speaker_recording_file;
 
-static int recording_volume = 5;
+static int recording_gain = 5;
 
 ///////////////////////////////// Configuration Constants //////////////////////
 i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_0;
@@ -110,7 +110,7 @@ static void reset_audio_buf();
 static void start_i2s();
 static void I2Sout(void *params);
 static void create_wave_header(wave_header_t *header, int data_length);
-static void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples);
+static void convert_samples(int16_t *dest, const int32_t *src, int num_samples);
 
 ////////////////////////////// Public Functions ///////////////////////////////
 bool setup_speaker() {
@@ -328,8 +328,9 @@ bool start_recording(const std::string &filename) {
                 }
 
                 // Convert the 32-bit samples to 16-bit samples
-                convert_samples(file_write_buff, i2s_read_buff, bytes_read / 4);
-                int bytes_to_write = bytes_read / 2;
+                int num_samples = bytes_read / 4;
+                int bytes_to_write = num_samples * 2;
+                convert_samples(file_write_buff, i2s_read_buff, num_samples);
 
                 // Write it to the file
                 if (speaker_recording_file.write((uint8_t *)file_write_buff, bytes_to_write) !=
@@ -339,7 +340,7 @@ bool start_recording(const std::string &filename) {
                 }
 
                 total_bytes_read += bytes_read;
-                Serial.println("Recording audio...");
+                // Serial.println("Recording audio...");
             }
 
             // Fill in the header
@@ -375,9 +376,7 @@ void stop_recording() {
 
 bool is_recording() { return recording_audio; }
 
-void set_recording_volume(uint8_t new_volume) {
-    recording_volume = new_volume > 12 ? 12 : new_volume;
-}
+void set_recording_gain(uint8_t new_gain) { recording_gain = new_gain; }
 
 ////////////////////////////// Private Functions ///////////////////////////////
 
@@ -460,7 +459,7 @@ void I2Sout(void *params) {
         } while (retv == pdPASS);
 
         if (TXdoneEvent) {
-            if (audio_buf_num_populated_frames >= 0) {
+            if (audio_buf_num_populated_frames > 0) {
                 size_t bytes_written;
                 i2s_write(SPEAKER_I2S_PORT, &audio_buf[audio_buf_frame_idx_to_send * FRAME_SIZE],
                           FRAME_SIZE * SPEAKER_BYTES_PER_SAMPLE, &bytes_written, portMAX_DELAY);
@@ -504,9 +503,22 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->data_length = data_length;
 }
 
-void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples) {
+void convert_samples(int16_t *dest, const int32_t *src, int num_samples) {
+    int64_t sum = 0;
     for (int i = 0; i < num_samples; i++) {
-        dest[i] = (src[i] >> 16) * recording_volume;
+        // Convert to 16 bit
+        dest[i] = ((src[i] >> 16));
+
+        // Keep track of total to average later
+        sum += dest[i];
+    }
+
+    // Average the samples
+    int64_t avg = sum / num_samples;
+
+    for (int i = 0; i < num_samples; i++) {
+        dest[i] -= avg;            // Subtract the average from each sample
+        dest[i] *= recording_gain; // Apply the gain
     }
 }
 
