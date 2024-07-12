@@ -198,7 +198,7 @@ void YBoardV3::stop_recording() { YAudio::stop_recording(); }
 
 bool YBoardV3::is_recording() { return YAudio::is_recording(); }
 
-void YBoardV3::set_recording_volume(uint8_t volume) { YAudio::set_recording_volume(volume); }
+void YBoardV3::set_recording_volume(uint8_t volume) {  YAudio::set_recording_gain(volume); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {

@@ -43,7 +43,7 @@ static bool recording_audio = false;
 static bool done_recording_audio = true;
 static File speaker_recording_file;
 
-static int recording_volume = 5;
+static int recording_gain = 5;
 
 ///////////////////////////////// Configuration Constants //////////////////////
 i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_0;
@@ -408,9 +408,7 @@ void stop_recording() {
 
 bool is_recording() { return recording_audio; }
 
-void set_recording_volume(uint8_t new_volume) {
-    recording_volume = new_volume > 12 ? 12 : new_volume;
-}
+void set_recording_gain(uint8_t new_gain) { recording_gain = new_gain; }
 
 ////////////////////////////// Private Functions ///////////////////////////////
 
@@ -539,7 +537,7 @@ void create_wave_header(wave_header_t *header, int data_length) {
 
 void convert_samples(uint16_t *dest, const uint32_t *src, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        dest[i] = (src[i] >> 16) * recording_volume;
+        dest[i] = (src[i] >> 16) * recording_gain;
     }
 }
 
@@ -843,8 +841,6 @@ bool processWAVFile(const std::string &inputFilePath, const std::string &outputF
     
     return true;
 }
-
-
 
 
 }; // namespace YAudio
