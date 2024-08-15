@@ -234,6 +234,12 @@ class YBoardV3 {
      */
     bool apply_low_pass(const std::string &inputFilePath, const std::string &outputFilePath, int cuttoff_freq);
     /*
+     *  This fucntion applies a band reject filter to audio data in a .wav file.
+     *  The fields and parameters are the same as the other filter functions but with low and high cutoff frequencies.
+     */
+    bool apply_band_reject(const std::string &inputFilePath, const std::string &outputFilePath,int low_cuttoff, int high_cutoff);
+
+    /*
       *  This function displays text on the OLED screen. Takes in a parameter text size
      */
     void display_text(const std::string &text, const int text_size);

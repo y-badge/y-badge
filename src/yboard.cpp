@@ -279,6 +279,9 @@ bool YBoardV3::apply_low_pass(const std::string &inputFilePath, const std::strin
 {
     return YAudio::processWAVFile(inputFilePath, outputFilePath, cuttoff_freq,false);
 }
+bool YBoardV3::apply_band_reject(const std::string &inputFilePath, const std::string &outputFilePath,int low_cuttoff, int high_cutoff) {
+    return YAudio::bandRejectFilter(inputFilePath, outputFilePath, low_cuttoff, high_cutoff);
+}
 
 bool YBoardV3::setup_display() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3c)) {
