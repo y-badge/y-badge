@@ -3,6 +3,7 @@
 
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_NeoPixel.h>
+#include <Adafruit_SSD1306.h>
 #include <FS.h>
 #include <SD.h>
 #include <SparkFun_LIS2DH12.h>
@@ -218,6 +219,9 @@ class YBoardV3 {
      */
     temperature_data get_temperature();
 
+    // Display
+    Adafruit_SSD1306 display;
+
     // LEDs
     static constexpr int led_pin = 5;
     static constexpr int led_count = 20;
@@ -262,6 +266,7 @@ class YBoardV3 {
     bool setup_accelerometer();
     bool setup_temperature();
     bool setup_sd_card();
+    bool setup_display();
 };
 
 extern YBoardV3 Yboard;

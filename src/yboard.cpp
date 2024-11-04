@@ -2,7 +2,7 @@
 
 YBoardV3 Yboard;
 
-YBoardV3::YBoardV3() : strip(led_count, led_pin, NEO_GRB + NEO_KHZ800) {}
+YBoardV3::YBoardV3() : strip(led_count, led_pin, NEO_GRB + NEO_KHZ800), display(128, 32) {}
 
 YBoardV3::~YBoardV3() {}
 
@@ -29,6 +29,10 @@ void YBoardV3::setup() {
 
     if (setup_temperature()) {
         Serial.println("Temperature Sensor Setup: Success");
+    }
+
+    if (setup_display()) {
+        Serial.println("Display Setup: Success");
     }
 }
 
@@ -264,6 +268,21 @@ bool YBoardV3::setup_sd_card() {
     }
 
     sd_card_present = true;
+
+    return true;
+}
+
+bool YBoardV3::setup_display() {
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3c)) {
+        Serial.println("Error initializing display");
+        return false;
+    }
+
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setRotation(0);
+    display.setTextWrap(false);
+    Yboard.display.setCursor(0, 0);
 
     return true;
 }
