@@ -7,12 +7,15 @@
 
 namespace YAudio {
 
+static const int PDM_RX_FREQ_HZ = 44100;
+static const int PDM_RX_CLK_IO = 41;
+static const int PDM_RX_DIN_IO = 40;
 static const int MIC_SAMPLE_RATE = 16000;
 static const int MIC_ORIGINAL_SAMPLE_BITS = 32;
 static const int MIC_CONVERTED_SAMPLE_BITS = 16;
 static const int MIC_READ_BUF_SIZE = 2048;
 static const int MIC_NUM_CHANNELS = 1;
-static const i2s_port_t MIC_I2S_PORT = I2S_NUM_1;
+static const i2s_port_t MIC_I2S_PORT = I2S_NUM_0;
 
 // Wave header as struct
 typedef struct {
@@ -41,7 +44,7 @@ static File speaker_recording_file;
 static int recording_gain = 5;
 
 ///////////////////////////////// Configuration Constants //////////////////////
-i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_0;
+i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_1;
 
 // The number of bits per sample.
 static const int SPEAKER_BITS_PER_SAMPLE = 16;
@@ -164,28 +167,26 @@ bool setup_mic() {
 
     const i2s_config_t i2s_config_mic = {
 
-        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX), // Receive, not transfer
-        .sample_rate = MIC_SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // could only get it to work with 32bits
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
-        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
-
+        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM), // Receive, not transfer
+        .sample_rate = PDM_RX_FREQ_HZ,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT, // use left channel
+        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S),
+        .intr_alloc_flags = 0,
         .dma_buf_count = 2,
         .dma_buf_len = 1024,
         .use_apll = 1};
 
-    const i2s_pin_config_t pin_config_mic = {
-        .bck_io_num = 42, .ws_io_num = 41, .data_out_num = I2S_PIN_NO_CHANGE, .data_in_num = 40};
+    const i2s_pin_config_t pin_config_mic = {.bck_io_num = I2S_PIN_NO_CHANGE,
+                                             .ws_io_num = PDM_RX_CLK_IO,
+                                             .data_out_num = I2S_PIN_NO_CHANGE,
+                                             .data_in_num = PDM_RX_DIN_IO};
 
     err = i2s_driver_install(MIC_I2S_PORT, &i2s_config_mic, 0, NULL);
     if (err != ESP_OK) {
         Serial.printf("Failed installing driver: %d\n", err);
         return false;
     }
-
-    REG_SET_BIT(I2S_RX_TIMING_REG(MIC_I2S_PORT), BIT(0));
-    REG_SET_BIT(I2S_RX_CONF1_REG(MIC_I2S_PORT), I2S_RX_MSB_SHIFT);
 
     err = i2s_set_pin(MIC_I2S_PORT, &pin_config_mic);
     if (err != ESP_OK) {
