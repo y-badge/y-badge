@@ -282,7 +282,8 @@ bool YBoardV3::setup_display() {
     display.setTextColor(WHITE);
     display.setRotation(0);
     display.setTextWrap(false);
-    Yboard.display.setCursor(0, 0);
+    display.setCursor(0, 0);
+    display.display();
 
     return true;
 }
