@@ -33,8 +33,7 @@ typedef struct {
     uint32_t data_length;
 } wave_header_t;
 
-int32_t i2s_read_buff[MIC_READ_BUF_SIZE];
-int16_t file_write_buff[MIC_READ_BUF_SIZE];
+int16_t i2s_read_buff[MIC_READ_BUF_SIZE];
 
 static bool recording_audio = false;
 static bool done_recording_audio = true;
@@ -112,7 +111,7 @@ static void reset_audio_buf();
 static void start_i2s();
 static void I2Sout(void *params);
 static void create_wave_header(wave_header_t *header, int data_length);
-static void convert_samples(int16_t *dest, const int32_t *src, int num_samples);
+static void apply_gain(int16_t *dest, int num_samples);
 
 ////////////////////////////// Public Functions ///////////////////////////////
 bool setup_speaker() {
@@ -327,11 +326,8 @@ bool start_recording(const std::string &filename) {
                     break;
                 }
 
-                // Convert the 32-bit samples to 16-bit samples
-                // int num_samples = bytes_read / 4;
-                // int bytes_to_write = num_samples * 2;
                 int bytes_to_write = bytes_read;
-                // convert_samples(file_write_buff, i2s_read_buff, num_samples);
+                apply_gain(i2s_read_buff, bytes_to_write);
 
                 // Write it to the file
                 if (speaker_recording_file.write((uint8_t *)i2s_read_buff, bytes_to_write) !=
@@ -504,22 +500,9 @@ void create_wave_header(wave_header_t *header, int data_length) {
     header->data_length = data_length;
 }
 
-void convert_samples(int16_t *dest, const int32_t *src, int num_samples) {
-    int64_t sum = 0;
+void apply_gain(int16_t *dest, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        // Convert to 16 bit
-        dest[i] = ((src[i] >> 16));
-
-        // Keep track of total to average later
-        sum += dest[i];
-    }
-
-    // Average the samples
-    int64_t avg = sum / num_samples;
-
-    for (int i = 0; i < num_samples; i++) {
-        dest[i] -= avg;            // Subtract the average from each sample
-        dest[i] *= recording_gain; // Apply the gain
+        dest[i] *= recording_gain;
     }
 }
 
