@@ -7,11 +7,10 @@
 
 namespace YAudio {
 
-static const int PDM_RX_FREQ_HZ = 44100;
-static const int PDM_RX_CLK_IO = 41;
-static const int PDM_RX_DIN_IO = 40;
-static const int MIC_SAMPLE_RATE = 16000;
-static const int MIC_ORIGINAL_SAMPLE_BITS = 32;
+static const int PDM_RX_CLK_PIN = 41;
+static const int PDM_RX_DIN_PIN = 40;
+static const int MIC_SAMPLE_RATE = 44100;
+static const int MIC_ORIGINAL_SAMPLE_BITS = 16;
 static const int MIC_CONVERTED_SAMPLE_BITS = 16;
 static const int MIC_READ_BUF_SIZE = 2048;
 static const int MIC_NUM_CHANNELS = 1;
@@ -49,7 +48,7 @@ i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_1;
 // The number of bits per sample.
 static const int SPEAKER_BITS_PER_SAMPLE = 16;
 static const int SPEAKER_BYTES_PER_SAMPLE = SPEAKER_BITS_PER_SAMPLE / 8;
-static const int SPEAKER_SAMPLE_RATE = 16000; // sample rate in Hz
+static const int SPEAKER_SAMPLE_RATE = 44100; // sample rate in Hz
 static const int MAX_NOTES_IN_BUFFER = 4000;
 
 // The number of frames of valid PCM audio data in the audio buffer. This will be incremented when
@@ -168,7 +167,7 @@ bool setup_mic() {
     const i2s_config_t i2s_config_mic = {
 
         .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM), // Receive, not transfer
-        .sample_rate = PDM_RX_FREQ_HZ,
+        .sample_rate = MIC_SAMPLE_RATE,
         .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
         .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT, // use left channel
         .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S),
@@ -178,9 +177,9 @@ bool setup_mic() {
         .use_apll = 1};
 
     const i2s_pin_config_t pin_config_mic = {.bck_io_num = I2S_PIN_NO_CHANGE,
-                                             .ws_io_num = PDM_RX_CLK_IO,
+                                             .ws_io_num = PDM_RX_CLK_PIN,
                                              .data_out_num = I2S_PIN_NO_CHANGE,
-                                             .data_in_num = PDM_RX_DIN_IO};
+                                             .data_in_num = PDM_RX_DIN_PIN};
 
     err = i2s_driver_install(MIC_I2S_PORT, &i2s_config_mic, 0, NULL);
     if (err != ESP_OK) {
@@ -329,12 +328,13 @@ bool start_recording(const std::string &filename) {
                 }
 
                 // Convert the 32-bit samples to 16-bit samples
-                int num_samples = bytes_read / 4;
-                int bytes_to_write = num_samples * 2;
-                convert_samples(file_write_buff, i2s_read_buff, num_samples);
+                // int num_samples = bytes_read / 4;
+                // int bytes_to_write = num_samples * 2;
+                int bytes_to_write = bytes_read;
+                // convert_samples(file_write_buff, i2s_read_buff, num_samples);
 
                 // Write it to the file
-                if (speaker_recording_file.write((uint8_t *)file_write_buff, bytes_to_write) !=
+                if (speaker_recording_file.write((uint8_t *)i2s_read_buff, bytes_to_write) !=
                     bytes_to_write) {
                     Serial.println("Failed to write data to file");
                     break;
