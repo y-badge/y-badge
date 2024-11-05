@@ -172,8 +172,7 @@ bool setup_mic() {
         .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S),
         .intr_alloc_flags = 0,
         .dma_buf_count = 2,
-        .dma_buf_len = 1024,
-        .use_apll = 1};
+        .dma_buf_len = 1024};
 
     const i2s_pin_config_t pin_config_mic = {.bck_io_num = I2S_PIN_NO_CHANGE,
                                              .ws_io_num = PDM_RX_CLK_PIN,
