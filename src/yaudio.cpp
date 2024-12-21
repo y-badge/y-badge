@@ -718,28 +718,25 @@ void get_samples(File &file, int16_t *dest, int num_bytes) {
         int bytes_read = file.read((uint8_t *)dest, num_bytes);
 
         if (bytes_read != num_bytes) {
-            // Fill the rest with to fill a frame
-            for (int i = bytes_read; i < num_bytes; i++) {
-                dest[i] = 0;
-            }
+            // TODO: Fill the rest with to fill a frame
+            Serial.println("Error: did not fill buffer enough!");
         }
     }
     // Need to duplicate samples
     else if (wave_sample_rate == SPEAKER_SAMPLE_RATE / 2) {
         num_bytes /= 2;
-        int16_t temp_dest[num_bytes];
+        int16_t temp_dest[num_bytes / 2];
         int bytes_read = file.read((uint8_t *)temp_dest, num_bytes);
 
         // Duplicate samples
-        for (int i = 0; i < bytes_read; i++) {
+        for (int i = 0; i < bytes_read / 2; i++) {
             dest[i * 2] = temp_dest[i];
             dest[i * 2 + 1] = temp_dest[i];
         }
 
-        // Fill the rest with to fill a frame
-        for (int i = bytes_read; i < num_bytes; i++) {
-            dest[i * 2] = 0;
-            dest[i * 2 + 1] = 0;
+        if (bytes_read != num_bytes) {
+            // TODO: Fill the rest with to fill a frame
+            Serial.println("Error: did not fill buffer enough!");
         }
     }
 }
