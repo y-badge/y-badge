@@ -9,7 +9,7 @@ namespace YAudio {
 
 static const int PDM_RX_CLK_PIN = 41;
 static const int PDM_RX_DIN_PIN = 40;
-static const int MIC_SAMPLE_RATE = 44100;
+static const int MIC_SAMPLE_RATE = 32000;
 static const int MIC_ORIGINAL_SAMPLE_BITS = 16;
 static const int MIC_CONVERTED_SAMPLE_BITS = 16;
 static const int MIC_READ_BUF_SIZE = 2048;
@@ -47,7 +47,7 @@ i2s_port_t SPEAKER_I2S_PORT = I2S_NUM_1;
 // The number of bits per sample.
 static const int SPEAKER_BITS_PER_SAMPLE = 16;
 static const int SPEAKER_BYTES_PER_SAMPLE = SPEAKER_BITS_PER_SAMPLE / 8;
-static const int SPEAKER_SAMPLE_RATE = 44100; // sample rate in Hz
+static const int SPEAKER_SAMPLE_RATE = 32000; // sample rate in Hz
 static const int MAX_NOTES_IN_BUFFER = 4000;
 
 // The number of frames of valid PCM audio data in the audio buffer. This will be incremented when
