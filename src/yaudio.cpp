@@ -238,11 +238,10 @@ bool play_sound_file(const std::string &filename) {
         return false;
     }
 
-    if (header.sample_rate != SPEAKER_SAMPLE_RATE &&
-        header.sample_rate != SPEAKER_SAMPLE_RATE / 2) {
-        Serial.printf(
-            "This file has a sample rate of %d. Only %d Hz or %d Hz sample rate is supported\n",
-            header.sample_rate, SPEAKER_SAMPLE_RATE, SPEAKER_SAMPLE_RATE / 2);
+    if (SPEAKER_SAMPLE_RATE % header.sample_rate != 0) {
+        Serial.printf("This file has a sample rate of %d. Only sample rates evenly divisible by %d "
+                      "are supported\n",
+                      header.sample_rate, SPEAKER_SAMPLE_RATE);
         file.close();
         return false;
     }
@@ -713,30 +712,28 @@ void parse_next_note() {
 }
 
 void get_samples(File &file, int16_t *dest, int num_bytes) {
-    // Normal operation
-    if (wave_sample_rate == SPEAKER_SAMPLE_RATE) {
-        int bytes_read = file.read((uint8_t *)dest, num_bytes);
+    // Calculate the resampling factor
+    int resample_factor = SPEAKER_SAMPLE_RATE / wave_sample_rate;
 
-        if (bytes_read != num_bytes) {
-            // TODO: Fill the rest with to fill a frame
-            Serial.println("Error: did not fill buffer enough!");
-        }
+    // Temporary buffer for reading data
+    int temp_num_samples = num_bytes / (resample_factor * sizeof(int16_t));
+    int16_t temp_dest[temp_num_samples];
+
+    // Read data from the file
+    int bytes_read = file.read((uint8_t *)temp_dest, temp_num_samples * sizeof(int16_t));
+
+    // Check if enough data was read
+    if (bytes_read != temp_num_samples * sizeof(int16_t)) {
+        Serial.println("Error: did not fill buffer enough!");
+        // Zero-fill remaining samples
+        memset(temp_dest + bytes_read / sizeof(int16_t), 0,
+               (temp_num_samples - bytes_read / sizeof(int16_t)) * sizeof(int16_t));
     }
-    // Need to duplicate samples
-    else if (wave_sample_rate == SPEAKER_SAMPLE_RATE / 2) {
-        num_bytes /= 2;
-        int16_t temp_dest[num_bytes / 2];
-        int bytes_read = file.read((uint8_t *)temp_dest, num_bytes);
 
-        // Duplicate samples
-        for (int i = 0; i < bytes_read / 2; i++) {
-            dest[i * 2] = temp_dest[i];
-            dest[i * 2 + 1] = temp_dest[i];
-        }
-
-        if (bytes_read != num_bytes) {
-            // TODO: Fill the rest with to fill a frame
-            Serial.println("Error: did not fill buffer enough!");
+    // Resample the data
+    for (int i = 0; i < temp_num_samples; i++) {
+        for (int j = 0; j < resample_factor; j++) {
+            dest[i * resample_factor + j] = temp_dest[i];
         }
     }
 }
