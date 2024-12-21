@@ -78,6 +78,7 @@ static int audio_buf_empty_idx;
 static bool i2s_running;
 static bool notes_running;
 static bool wave_running;
+static int wave_sample_rate;
 
 ////// Notes //////
 // This is the sequence of notes to play
@@ -237,9 +238,11 @@ bool play_sound_file(const std::string &filename) {
         return false;
     }
 
-    if (header.sample_rate != SPEAKER_SAMPLE_RATE) {
-        Serial.printf("This file has a sample rate of %d. Only %d Hz sample rate is supported\n",
-                      header.sample_rate, SPEAKER_SAMPLE_RATE);
+    if (header.sample_rate != SPEAKER_SAMPLE_RATE &&
+        header.sample_rate != SPEAKER_SAMPLE_RATE / 2) {
+        Serial.printf(
+            "This file has a sample rate of %d. Only %d Hz or %d Hz sample rate is supported\n",
+            header.sample_rate, SPEAKER_SAMPLE_RATE, SPEAKER_SAMPLE_RATE / 2);
         file.close();
         return false;
     }
@@ -252,6 +255,7 @@ bool play_sound_file(const std::string &filename) {
     }
 
     start_i2s();
+    wave_sample_rate = header.sample_rate;
     wave_running = true;
     return true;
 }
@@ -708,6 +712,38 @@ void parse_next_note() {
     next_note_parsed = true;
 }
 
+void get_samples(File &file, int16_t *dest, int num_bytes) {
+    // Normal operation
+    if (wave_sample_rate == SPEAKER_SAMPLE_RATE) {
+        int bytes_read = file.read((uint8_t *)dest, num_bytes);
+
+        if (bytes_read != num_bytes) {
+            // Fill the rest with to fill a frame
+            for (int i = bytes_read; i < num_bytes; i++) {
+                dest[i] = 0;
+            }
+        }
+    }
+    // Need to duplicate samples
+    else if (wave_sample_rate == SPEAKER_SAMPLE_RATE / 2) {
+        num_bytes /= 2;
+        int16_t temp_dest[num_bytes];
+        int bytes_read = file.read((uint8_t *)temp_dest, num_bytes);
+
+        // Duplicate samples
+        for (int i = 0; i < bytes_read; i++) {
+            dest[i * 2] = temp_dest[i];
+            dest[i * 2 + 1] = temp_dest[i];
+        }
+
+        // Fill the rest with to fill a frame
+        for (int i = bytes_read; i < num_bytes; i++) {
+            dest[i * 2] = 0;
+            dest[i * 2 + 1] = 0;
+        }
+    }
+}
+
 void loop() {
     if (notes_running) {
         // Parse the next note
@@ -727,25 +763,19 @@ void loop() {
         }
     } else if (wave_running) {
         if (file.available() && audio_buf_num_populated_frames < WAVE_FRAMES_TO_BUFFER) {
+            // Read the next frame of audio data
             int bytes_to_read = FRAME_SIZE * SPEAKER_BYTES_PER_SAMPLE;
+            get_samples(file, &audio_buf[audio_buf_empty_idx], bytes_to_read);
 
-            size_t bytes_read =
-                file.read((uint8_t *)&audio_buf[audio_buf_empty_idx], bytes_to_read);
-            yield();
-            if (bytes_read == bytes_to_read) {
-                // Swap even and odd samples, and apply volume
-                for (int i = 0; i < FRAME_SIZE; i += 2) {
-                    int16_t temp = audio_buf[audio_buf_empty_idx + i];
-                    audio_buf[audio_buf_empty_idx + i] =
-                        audio_buf[audio_buf_empty_idx + i + 1] * volume_wave / 10.0;
-                    audio_buf[audio_buf_empty_idx + i + 1] = temp * volume_wave / 10.0;
-                }
-
-                audio_buf_empty_idx =
-                    (audio_buf_empty_idx + FRAME_SIZE) % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
-                audio_buf_num_populated_frames++;
-                // Serial.printf("Frame filled. # populated: %d\n", audio_buf_num_populated_frames);
+            // Apply volume
+            for (int i = 0; i < FRAME_SIZE; i++) {
+                audio_buf[audio_buf_empty_idx + i] *= volume_wave / 10.0;
             }
+
+            // Update pointer to memory
+            audio_buf_empty_idx =
+                (audio_buf_empty_idx + FRAME_SIZE) % (FRAME_SIZE * AUDIO_BUF_NUM_FRAMES);
+            audio_buf_num_populated_frames++;
         } else if (audio_buf_num_populated_frames <= 0) {
             stop_speaker();
         }
