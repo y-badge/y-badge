@@ -717,17 +717,17 @@ void get_samples(File &file, int16_t *dest, int num_bytes) {
 
     // Temporary buffer for reading data
     int temp_num_samples = num_bytes / (resample_factor * sizeof(int16_t));
+    int temp_num_bytes = temp_num_samples * sizeof(int16_t);
     int16_t temp_dest[temp_num_samples];
 
     // Read data from the file
-    int bytes_read = file.read((uint8_t *)temp_dest, temp_num_samples * sizeof(int16_t));
+    int bytes_read = file.read((uint8_t *)temp_dest, temp_num_bytes);
+    int samples_read = bytes_read / sizeof(int16_t);
 
     // Check if enough data was read
-    if (bytes_read != temp_num_samples * sizeof(int16_t)) {
-        Serial.println("Error: did not fill buffer enough!");
+    if (bytes_read != temp_num_bytes) {
         // Zero-fill remaining samples
-        memset(temp_dest + bytes_read / sizeof(int16_t), 0,
-               (temp_num_samples - bytes_read / sizeof(int16_t)) * sizeof(int16_t));
+        memset(temp_dest + samples_read, 0, (temp_num_samples - samples_read) * sizeof(int16_t));
     }
 
     // Resample the data
