@@ -126,17 +126,15 @@ bool setup_speaker() {
     wave_running = false;
     volume_wave = 5;
 
-    const i2s_config_t i2s_config_speaker = {
-        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX), // Receive, not transfer
-        .sample_rate = SPEAKER_SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, // could only get it to work with 32bits
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,  // use left channel
-        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // Interrupt level 1
-
-        .dma_buf_count = 2,
-        .dma_buf_len = 1024,
-        .use_apll = 0};
+    const i2s_config_t i2s_config_speaker = {.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX),
+                                             .sample_rate = SPEAKER_SAMPLE_RATE,
+                                             .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+                                             .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+                                             .communication_format = I2S_COMM_FORMAT_STAND_I2S,
+                                             .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+                                             .dma_buf_count = 2,
+                                             .dma_buf_len = 1024,
+                                             .use_apll = 0};
 
     const i2s_pin_config_t pin_config_speaker = {
         .bck_io_num = 21, .ws_io_num = 47, .data_out_num = 14, .data_in_num = I2S_PIN_NO_CHANGE};
@@ -165,12 +163,11 @@ bool setup_mic() {
     esp_err_t err;
 
     const i2s_config_t i2s_config_mic = {
-
-        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM), // Receive, not transfer
+        .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM),
         .sample_rate = MIC_SAMPLE_RATE,
         .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT, // use left channel
-        .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S),
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+        .communication_format = I2S_COMM_FORMAT_STAND_I2S,
         .intr_alloc_flags = 0,
         .dma_buf_count = 2,
         .dma_buf_len = 1024};
