@@ -4,6 +4,7 @@
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_SSD1306.h>
+#include <AudioTools.h>
 #include <FS.h>
 #include <SD.h>
 #include <SparkFun_LIS2DH12.h>
@@ -167,6 +168,8 @@ class YBoardV3 {
      */
     bool is_audio_playing();
 
+    AudioStream &get_speaker_stream();
+
     ////////////////////////////// Microphone ////////////////////////////////////////
     /*
      *  This function starts recording audio from the microphone. The filename is a
@@ -246,10 +249,16 @@ class YBoardV3 {
     static constexpr int spi_miso_pin = 13;
     static constexpr int spi_sck_pin = 12;
 
-    // I2S Connections
-    static constexpr int i2s_dout_pin = 14;
-    static constexpr int i2s_bclk_pin = 21;
-    static constexpr int i2s_lrc_pin = 47;
+    // I2S Speaker Connections
+    static constexpr int speaker_i2s_data_pin = 14;
+    static constexpr int speaker_i2s_bclk_pin = 21;
+    static constexpr int speaker_i2s_ws_pin = 47;
+    static constexpr int speaker_i2s_port = 1;
+
+    // I2S Microphone Connections
+    static constexpr int mic_i2s_ws_pin = 41;
+    static constexpr int mic_i2s_data_pin = 40;
+    static constexpr int mic_i2s_port = 0;
 
   private:
     Adafruit_NeoPixel strip;

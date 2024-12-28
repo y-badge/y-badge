@@ -30,7 +30,9 @@
         "adafruit/Adafruit BusIO": "*",
         "adafruit/Adafruit SH110X": "*",
         "adafruit/Adafruit GFX Library": "*",
-        "adafruit/Adafruit Unified Sensor": "*"
+        "adafruit/Adafruit Unified Sensor": "*",
+        "arduino-libhelix": "https://github.com/pschatzmann/arduino-libhelix.git#v0.8.6",
+        "arduino-audio-tools": "https://github.com/pschatzmann/arduino-audio-tools.git#v1.0.1"
     },
     "frameworks": [
         "arduino"
