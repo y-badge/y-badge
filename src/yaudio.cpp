@@ -141,6 +141,7 @@ bool start_recording(const std::string &filename) {
 
             speaker_recording_file.flush();
             speaker_recording_file.close();
+            wav_encoder.end();
 
             // Indicate to the main task that we are done
             done_recording_audio = true;
