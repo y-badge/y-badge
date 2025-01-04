@@ -30,18 +30,22 @@ TaskHandle_t play_note_task_handle;
 SemaphoreHandle_t notes_mutex;
 
 // General stream stuff
-AudioInfo sineInfo(16000, 1, 16); // Information about the audio stream
-I2SStream speakerOut;             // Speaker stream
-StreamCopy copier;                // Copies samples to the speaker
-PoppingSoundRemover<int16_t> poppingRemover(1, true, true);
+StreamCopy copier;
 
 // Stuff for tone generation
+AudioInfo sineInfo(16000, 1, 16);
 SineWaveGenerator<int16_t> sineWave(16000);
 GeneratedSoundStream<int16_t> toneStream(sineWave);
+
+// Stuff for speaker
+I2SStream speakerOut;
+PoppingSoundRemover<int16_t> poppingRemover(1, true, true);
 
 // Stuff for audio file decoding
 VolumeStream speakerVolume(speakerOut);
 EncodedAudioStream wav_decoder(&speakerVolume, new WAVDecoder());
+EncodedAudioStream mp3_decoder(&speakerVolume, new MP3DecoderHelix());
+// TODO: Rename everything form wav to something else
 
 // Stuff for microphone
 static File speaker_recording_file;
@@ -211,9 +215,23 @@ bool play_sound_file(const std::string &filename) {
         return false;
     }
 
+    char start[4];
+    file.readBytes(start, 4);
+    file.seek(0);
+
+    if (start[0] == 0xFF || start[0] == 0xFE || strncmp("ID3", (const char *)start, 3) == 0) {
+        LOGI("using MP3DecoderHelix");
+        mp3_decoder.end();
+        mp3_decoder.begin();
+        copier.begin(mp3_decoder, file);
+    } else if (strncmp("RIFF", (const char *)start, 4) == 0) {
+        LOGI("using WAVDecoder");
+        wav_decoder.end();
+        wav_decoder.begin();
+        copier.begin(wav_decoder, file);
+    }
+
     playing_wave = true;
-    wav_decoder.begin();
-    copier.begin(wav_decoder, file);
 
     return true;
 }
