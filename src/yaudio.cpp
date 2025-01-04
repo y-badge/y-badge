@@ -229,6 +229,9 @@ bool play_sound_file(const std::string &filename) {
         wav_decoder.end();
         wav_decoder.begin();
         copier.begin(wav_decoder, file);
+    } else {
+        LOGE("Unknown file type");
+        return false;
     }
 
     playing_wave = true;
