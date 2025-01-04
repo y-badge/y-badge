@@ -111,9 +111,6 @@ bool YBoardV3::setup_speaker() {
         return false;
     }
 
-    // Set Volume
-    YAudio::set_wave_volume(5);
-
     return true;
 }
 
