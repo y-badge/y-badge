@@ -45,7 +45,7 @@ EncodedAudioStream wav_decoder(&speakerVolume, new WAVDecoder());
 
 // Stuff for microphone
 static File speaker_recording_file;
-AudioInfo micInfo(16000, 1, 16);
+AudioInfo micInfo(44100, 1, 16);
 I2SStream micIn;
 VolumeStream micVolume(micIn);
 EncodedAudioStream wav_encoder(&speaker_recording_file, new WAVEncoder());
