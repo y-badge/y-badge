@@ -26,40 +26,39 @@ typedef struct {
 } note_t;
 
 // Note playing task
-TaskHandle_t play_note_task_handle;
-SemaphoreHandle_t notes_mutex;
+static TaskHandle_t play_note_task_handle;
+static SemaphoreHandle_t notes_mutex;
 
-// General stream stuff
-StreamCopy copier;
+// General stream variables
+static StreamCopy copier;
 
-// Stuff for tone generation
-AudioInfo sineInfo(16000, 1, 16);
-SineWaveGenerator<int16_t> sineWave(16000);
-GeneratedSoundStream<int16_t> toneStream(sineWave);
+// Variables for speaker
+static I2SStream speakerOut;
+static PoppingSoundRemover<int16_t> poppingRemover(1, true, true);
 
-// Stuff for speaker
-I2SStream speakerOut;
-PoppingSoundRemover<int16_t> poppingRemover(1, true, true);
+// Variables for tone generation
+static AudioInfo sineInfo(16000, 1, 16);
+static SineWaveGenerator<int16_t> sineWave(16000);
+static GeneratedSoundStream<int16_t> toneStream(sineWave);
+static bool playing_tones = false;
 
-// Stuff for audio file decoding
-VolumeStream speakerVolume(speakerOut);
-EncodedAudioStream wav_decoder(&speakerVolume, new WAVDecoder());
-EncodedAudioStream mp3_decoder(&speakerVolume, new MP3DecoderHelix());
-// TODO: Rename everything form wav to something else
+// Variables for audio file decoding
+static File sound_file;
+static VolumeStream speakerVolume(speakerOut);
+static EncodedAudioStream wav_decoder(&speakerVolume, new WAVDecoder());
+static EncodedAudioStream mp3_decoder(&speakerVolume, new MP3DecoderHelix());
+static bool playing_file = false;
 
-// Stuff for microphone
+// Variables for microphone
 static File speaker_recording_file;
-AudioInfo micInfo(44100, 1, 16);
-I2SStream micIn;
-VolumeStream micVolume(micIn);
-EncodedAudioStream wav_encoder(&speaker_recording_file, new WAVEncoder());
+static AudioInfo micInfo(44100, 1, 16);
+static I2SStream micIn;
+static VolumeStream micVolume(micIn);
 
+// Variables for recording
+static EncodedAudioStream wav_encoder(&speaker_recording_file, new WAVEncoder());
 static bool recording_audio = false;
 static bool done_recording_audio = true;
-
-static fs::File file;
-static bool playing_wave = false;
-static bool playing_tones = false;
 
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
@@ -194,7 +193,7 @@ bool add_notes(const std::string &new_notes) {
 void stop_speaker() {
     // Update flags
     playing_tones = false;
-    playing_wave = false;
+    playing_file = false;
 
     // Clear out all pending notes
     xSemaphoreTake(notes_mutex, portMAX_DELAY);
@@ -204,38 +203,38 @@ void stop_speaker() {
     copier.end();
 }
 
-bool is_playing() { return playing_tones || playing_wave; }
+bool is_playing() { return playing_tones || playing_file; }
 
 bool play_sound_file(const std::string &filename) {
     // Whether notes or wave is running, stop it
     stop_speaker();
 
-    file = SD.open(filename.c_str());
-    if (!file) {
+    sound_file = SD.open(filename.c_str());
+    if (!sound_file) {
         Serial.printf("Error opening file: %s\n", filename.c_str());
         return false;
     }
 
     char start[4];
-    file.readBytes(start, 4);
-    file.seek(0);
+    sound_file.readBytes(start, 4);
+    sound_file.seek(0);
 
     if (start[0] == 0xFF || start[0] == 0xFE || strncmp("ID3", (const char *)start, 3) == 0) {
         LOGI("using MP3DecoderHelix");
         mp3_decoder.end();
         mp3_decoder.begin();
-        copier.begin(mp3_decoder, file);
+        copier.begin(mp3_decoder, sound_file);
     } else if (strncmp("RIFF", (const char *)start, 4) == 0) {
         LOGI("using WAVDecoder");
         wav_decoder.end();
         wav_decoder.begin();
-        copier.begin(wav_decoder, file);
+        copier.begin(wav_decoder, sound_file);
     } else {
         LOGE("Unknown file type");
         return false;
     }
 
-    playing_wave = true;
+    playing_file = true;
 
     return true;
 }
@@ -447,13 +446,13 @@ void loop() {
 
     if (playing_tones) {
         copier.copy(poppingRemover);
-    } else if (playing_wave) {
+    } else if (playing_file) {
         int bytes_copied = copier.copy(poppingRemover);
-        if (file.size() > 0 && file.available() == 0 && bytes_copied == 0) {
+        if (sound_file.size() > 0 && sound_file.available() == 0 && bytes_copied == 0) {
             // Make sure the it is a real file, it is done playing and the copier is done copying
 
             Serial.println("Done playing wave file");
-            playing_wave = false;
+            playing_file = false;
         }
     }
 }
