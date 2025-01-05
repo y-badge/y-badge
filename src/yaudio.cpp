@@ -6,6 +6,9 @@
 #include <FS.h>
 #include <SD.h>
 
+// TODO: Figure out what needs to be done so people don't have to #include "AudioTools.h"
+// TODO: Switch serial stuff to LOGI
+
 namespace YAudio {
 
 ///////////////////////////////// Configuration Constants //////////////////////
