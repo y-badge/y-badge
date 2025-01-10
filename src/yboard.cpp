@@ -114,17 +114,6 @@ bool YBoardV3::setup_speaker() {
     return true;
 }
 
-bool YBoardV3::setup_mic() {
-    if (!YAudio::setup_mic(mic_i2s_ws_pin, mic_i2s_data_pin, mic_i2s_port)) {
-        Serial.println("ERROR: Mic setup failed.");
-        return false;
-    }
-
-    YAudio::set_recording_gain(10);
-
-    return true;
-}
-
 void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_sound_file(const std::string &filename) {
@@ -182,6 +171,17 @@ bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 I2SStream &YBoardV3::get_speaker_stream() { return YAudio::get_speaker_stream(); }
 
 ////////////////////////////// Microphone ////////////////////////////////////////
+bool YBoardV3::setup_mic() {
+    if (!YAudio::setup_mic(mic_i2s_ws_pin, mic_i2s_data_pin, mic_i2s_port)) {
+        Serial.println("ERROR: Mic setup failed.");
+        return false;
+    }
+
+    YAudio::set_recording_gain(10);
+
+    return true;
+}
+
 bool YBoardV3::start_recording(const std::string &filename) {
     // Prepend filename with a / if it doesn't have one
     std::string _filename = filename;
