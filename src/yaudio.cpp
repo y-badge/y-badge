@@ -6,9 +6,6 @@
 #include <FS.h>
 #include <SD.h>
 
-// TODO: Figure out what needs to be done so people don't have to #include "AudioTools.h"
-// TODO: Switch serial stuff to LOGI
-
 namespace YAudio {
 
 ///////////////////////////////// Configuration Constants //////////////////////
@@ -73,8 +70,6 @@ static void set_note_defaults();
 bool setup_speaker(int ws_pin, int bck_pin, int data_pin, int i2s_port) {
     set_note_defaults();
 
-    AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Info);
-
     Serial.println("starting I2S...");
     auto config = speakerOut.defaultConfig(TX_MODE);
     config.copyFrom(sineInfo);
@@ -101,9 +96,9 @@ bool setup_mic(int ws_pin, int data_pin, int i2s_port) {
     config.signal_type = PDM;
     config.i2s_format = I2S_STD_FORMAT;
     config.is_master = true;
-    config.port_no = 0;
-    config.pin_ws = 41;
-    config.pin_data = 40;
+    config.port_no = i2s_port;
+    config.pin_ws = ws_pin;
+    config.pin_data = data_pin;
 
     auto volumeConfig = micVolume.defaultConfig();
     volumeConfig.copyFrom(micInfo);
