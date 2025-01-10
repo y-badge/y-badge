@@ -9,7 +9,6 @@ namespace YAudio {
 
 bool setup_speaker(int ws_pin, int bck_pin, int data_pin, int i2s_port);
 bool setup_mic(int ws_pin, int data_pin, int i2s_port);
-void loop();
 I2SStream &get_speaker_stream();
 I2SStream &get_mic_stream();
 void set_wave_volume(uint8_t volume);

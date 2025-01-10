@@ -94,13 +94,6 @@ class YBoardV3 {
 
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     /*
-     *  This function continues to play a sound on the speaker after the
-     * play_sound_file function is called. This function must be called often to
-     * playback the sound on the speaker.
-     */
-    void loop_speaker();
-
-    /*
      *  This function plays a sound on the speaker. The filename is a string
      * representing the name of the sound file to play. The return type is a boolean
      * value (true or false). True corresponds to the sound being played
@@ -112,8 +105,7 @@ class YBoardV3 {
     /* This is similar to the function above, except that it will start the song playing
      * in the background and return immediately. The song will continue to play in the
      * background until it is stopped with the stop_audio function, another song is
-     * played, play_notes is called, or the song finishes. After this function is called, the
-     * loop_speaker function must be called often to playback the sound on the speaker.
+     * played, play_notes is called, or the song finishes.
      */
     bool play_sound_file_background(const std::string &filename);
 
@@ -153,8 +145,6 @@ class YBoardV3 {
      * or the notes finish. If you call this function again before the notes finish, the
      * the new notes will be appended to the end of the current notes.  This allows you to
      * call this function multiple times to build up multiple sequences of notes to play.
-     * After this function is called, the loop_speaker function must be called often to
-     * playback the sound on the speaker.
      */
     bool play_notes_background(const std::string &new_notes);
 

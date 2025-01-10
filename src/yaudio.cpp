@@ -26,7 +26,7 @@ typedef struct {
 } note_t;
 
 // Note playing task
-static TaskHandle_t play_note_task_handle;
+static TaskHandle_t play_speaker_task_handle;
 static SemaphoreHandle_t notes_mutex;
 
 // General stream variables
@@ -62,7 +62,7 @@ static bool done_recording_audio = true;
 
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
-static void play_note_task(void *params);
+static void play_speaker_task(void *params);
 static note_t parse_next_note();
 static void set_note_defaults();
 
@@ -85,7 +85,8 @@ bool setup_speaker(int ws_pin, int bck_pin, int data_pin, int i2s_port) {
     notes_mutex = xSemaphoreCreateMutex();
 
     // Create task that will actually do the playing
-    xTaskCreate(play_note_task, "play_note_task", 20000, NULL, 1, &play_note_task_handle);
+    // TODO: What is the right stack size?
+    xTaskCreate(play_speaker_task, "play_speaker_task", 20000, NULL, 1, &play_speaker_task_handle);
 
     return true;
 }
@@ -127,6 +128,7 @@ bool start_recording(const std::string &filename) {
     done_recording_audio = false;
 
     // Create the task to actually do the recording
+    // TODO: Move this to a function
     xTaskCreate(
         [](void *arg) {
             wav_encoder.begin(micInfo);
@@ -182,8 +184,8 @@ bool add_notes(const std::string &new_notes) {
     xSemaphoreGive(notes_mutex);
 
     // Signal we need to play the notes
-    xTaskNotifyGive(play_note_task_handle);
     playing_tones = true;
+    xTaskNotifyGive(play_speaker_task_handle);
 
     return true;
 }
@@ -233,6 +235,7 @@ bool play_sound_file(const std::string &filename) {
     }
 
     playing_file = true;
+    xTaskNotifyGive(play_speaker_task_handle);
 
     return true;
 }
@@ -243,37 +246,6 @@ void set_note_defaults() {
     beats_per_minute = 120;
     octave = 5;
     volume_notes = 5;
-}
-
-void play_note_task(void *params) {
-    while (1) {
-        // Block waiting for notes to play
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-        // Setup sine wave
-        sineWave.begin(sineInfo);
-
-        // Start the audio stream
-        copier.begin(speakerOut, toneStream);
-
-        // Play all the notes until there are none left
-        while (notes.length()) {
-            xSemaphoreTake(notes_mutex, portMAX_DELAY);
-            note_t note = parse_next_note();
-            xSemaphoreGive(notes_mutex);
-
-            // Serial.printf("Playing note (frequency: %u, duration: %u)\n", note.frequency,
-            //               note.duration);
-
-            // Play the tone and wait for it to finish
-            sineWave.setFrequency(note.frequency);
-            sineWave.setAmplitude(16000 * (volume_notes / 10.0));
-            delay(note.duration);
-        }
-
-        // If all of the notes have been played, signal that we are done
-        playing_tones = false;
-    }
 }
 
 note_t parse_next_note() {
@@ -440,19 +412,45 @@ note_t parse_next_note() {
 
 void set_wave_volume(uint8_t new_volume) { speakerVolume.setVolume(new_volume / 10.0); }
 
-void loop() {
+void play_speaker_task(void *params) {
+    while (1) {
+        // Block waiting for something to do
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    if (playing_tones) {
-        copier.copy(poppingRemover);
-    } else if (playing_file) {
-        int bytes_copied = copier.copy(poppingRemover);
-        if (sound_file.size() > 0 && sound_file.available() == 0 && bytes_copied == 0) {
-            // Make sure the it is a real file, it is done playing and the copier is done copying
+        if (playing_tones) {
+            // Setup sine wave
+            sineWave.begin(sineInfo);
 
-            Serial.println("Done playing wave file");
-            playing_file = false;
+            // Start the audio stream
+            copier.begin(speakerOut, toneStream);
+
+            // Play all the notes until there are none left
+            while (notes.length()) {
+                xSemaphoreTake(notes_mutex, portMAX_DELAY);
+                note_t note = parse_next_note();
+                xSemaphoreGive(notes_mutex);
+
+                // Play the tone and wait for it to finish
+                sineWave.setFrequency(note.frequency);
+                sineWave.setAmplitude(16000 * (volume_notes / 10.0));
+
+                // Copy during the note duration
+                int start_time = millis();
+                while ((millis() - start_time) < note.duration) {
+                    copier.copy(poppingRemover);
+                }
+            }
+
+            // If all of the notes have been played, signal that we are done
+            playing_tones = false;
+        }
+
+        while (playing_file) {
+            if (copier.copy(poppingRemover) == 0 && sound_file.available() == 0) {
+                Serial.println("Done playing wave file");
+                playing_file = false;
+            }
         }
     }
 }
-
 }; // namespace YAudio
