@@ -179,7 +179,7 @@ void YBoardV3::stop_audio() { YAudio::stop_speaker(); }
 
 bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
-AudioStream &YBoardV3::get_speaker_stream() { return YAudio::get_speaker_stream(); }
+I2SStream &YBoardV3::get_speaker_stream() { return YAudio::get_speaker_stream(); }
 
 ////////////////////////////// Microphone ////////////////////////////////////////
 bool YBoardV3::start_recording(const std::string &filename) {
@@ -202,6 +202,8 @@ void YBoardV3::stop_recording() { YAudio::stop_recording(); }
 bool YBoardV3::is_recording() { return YAudio::is_recording(); }
 
 void YBoardV3::set_recording_volume(uint8_t volume) { YAudio::set_recording_gain(volume); }
+
+I2SStream &YBoardV3::get_microphone_stream() { return YAudio::get_mic_stream(); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {

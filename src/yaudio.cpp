@@ -170,9 +170,9 @@ bool is_recording() { return recording_audio; }
 
 void set_recording_gain(uint8_t new_gain) { micVolume.setVolume(new_gain); }
 
-// TODO: Test this with doing an FFT
-// https://github.com/pschatzmann/arduino-audio-tools/blob/main/examples/examples-player/player-sdfat-ffti2s/player-sdfat-ffti2s.ino
-AudioStream &get_speaker_stream() { return speakerOut; }
+I2SStream &get_speaker_stream() { return speakerOut; }
+
+I2SStream &get_mic_stream() { return micIn; }
 
 bool add_notes(const std::string &new_notes) {
     if ((notes.length() + new_notes.length()) > MAX_NOTES_IN_BUFFER) {

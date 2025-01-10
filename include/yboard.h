@@ -168,7 +168,14 @@ class YBoardV3 {
      */
     bool is_audio_playing();
 
-    AudioStream &get_speaker_stream();
+    /*
+     * This function returns the speaker stream object which can be used to take
+     * control of the speaker, beyond playing a tone or a file, which this
+     * library already provides. This is an advanced function. To see what you
+     * can do with a speaker stream object, you can view
+     * https://github.com/pschatzmann/arduino-audio-tools.
+     */
+    I2SStream &get_speaker_stream();
 
     ////////////////////////////// Microphone ////////////////////////////////////////
     /*
@@ -195,6 +202,15 @@ class YBoardV3 {
      * an integer between 0 and 12. A volume of 0 is off, and a volume of 12 is full volume.
      */
     void set_recording_volume(uint8_t volume);
+
+    /*
+     * This function returns the microphone stream object which can be used to take
+     * control of the microphone, beyond recording to a file, which this
+     * library already provides. This is an advanced function. To see what you
+     * can do with a microphone stream object, you can view
+     * https://github.com/pschatzmann/arduino-audio-tools.
+     */
+    I2SStream &get_microphone_stream();
 
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
