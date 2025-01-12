@@ -85,8 +85,7 @@ bool setup_speaker(int ws_pin, int bck_pin, int data_pin, int i2s_port) {
     notes_mutex = xSemaphoreCreateMutex();
 
     // Create task that will actually do the playing
-    // TODO: What is the right stack size?
-    xTaskCreate(play_speaker_task, "play_speaker_task", 20000, NULL, 1, &play_speaker_task_handle);
+    xTaskCreate(play_speaker_task, "play_speaker_task", 4096, NULL, 1, &play_speaker_task_handle);
 
     return true;
 }
