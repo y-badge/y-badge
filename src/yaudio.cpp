@@ -447,9 +447,8 @@ void play_speaker_task(void *params) {
         if (playing_file) {
             // Keep copying until the file and copier is done
             while (playing_file &&
-                   !(copier.copy(poppingRemover) == 0 && sound_file.available() == 0)) {
-                delay(10);
-            }
+                   !(copier.copy(poppingRemover) == 0 && sound_file.available() == 0))
+                ;
             playing_file = false;
         }
     }
