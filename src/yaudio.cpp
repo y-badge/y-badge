@@ -63,6 +63,7 @@ static bool done_recording_audio = true;
 //////////////////////////// Private Function Prototypes ///////////////////////
 // Local private functions
 static void play_speaker_task(void *params);
+static void recording_audio_task(void *params);
 static note_t parse_next_note();
 static void set_note_defaults();
 
@@ -127,29 +128,28 @@ bool start_recording(const std::string &filename) {
     done_recording_audio = false;
 
     // Create the task to actually do the recording
-    // TODO: Move this to a function
-    xTaskCreate(
-        [](void *arg) {
-            wav_encoder.begin(micInfo);
-            copier.begin(wav_encoder, micVolume);
-
-            while (recording_audio) {
-                copier.copy();
-            }
-
-            speaker_recording_file.flush();
-            speaker_recording_file.close();
-            wav_encoder.end();
-
-            // Indicate to the main task that we are done
-            done_recording_audio = true;
-
-            // This task is done so delete itself
-            vTaskDelete(NULL);
-        },
-        "recording_audio", 4096, NULL, 1, NULL);
+    xTaskCreate(recording_audio_task, "recording_audio_task", 4096, NULL, 1, NULL);
 
     return true;
+}
+
+void recording_audio_task(void *params) {
+    wav_encoder.begin(micInfo);
+    copier.begin(wav_encoder, micVolume);
+
+    while (recording_audio) {
+        copier.copy();
+    }
+
+    speaker_recording_file.flush();
+    speaker_recording_file.close();
+    wav_encoder.end();
+
+    // Indicate to the main task that we are done
+    done_recording_audio = true;
+
+    // This task is done so delete itself
+    vTaskDelete(NULL);
 }
 
 void stop_recording() {
