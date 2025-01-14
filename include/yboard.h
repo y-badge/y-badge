@@ -1,7 +1,6 @@
 #ifndef YBOARDV3_H
 #define YBOARDV3_H
 
-#include <Adafruit_AHTX0.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_SSD1306.h>
 #include <AudioTools.h>
@@ -16,11 +15,6 @@ struct accelerometer_data {
     float x;
     float y;
     float z;
-};
-
-struct temperature_data {
-    float temperature;
-    float humidity;
 };
 
 class YBoardV3 {
@@ -219,15 +213,6 @@ class YBoardV3 {
      */
     accelerometer_data get_accelerometer();
 
-    /////////////////////////////// Temperature /////////////////////////////////////
-
-    /*
-     *  This function returns the temperature and humidity data.
-     *  The return type is a struct with temperature and humidity fields.
-     * These values are floats.
-     */
-    temperature_data get_temperature();
-
     // Display
     Adafruit_SSD1306 display;
 
@@ -269,7 +254,6 @@ class YBoardV3 {
   private:
     Adafruit_NeoPixel strip;
     SPARKFUN_LIS2DH12 accel;
-    Adafruit_AHTX0 aht;
     bool wire_begin = false;
     bool sd_card_present = false;
 
@@ -279,7 +263,6 @@ class YBoardV3 {
     bool setup_speaker();
     bool setup_mic();
     bool setup_accelerometer();
-    bool setup_temperature();
     bool setup_sd_card();
     bool setup_display();
 };
