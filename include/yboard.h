@@ -4,6 +4,7 @@
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_SSD1306.h>
+#include <AudioTools.h>
 #include <FS.h>
 #include <SD.h>
 #include <SparkFun_LIS2DH12.h>
@@ -93,13 +94,6 @@ class YBoardV3 {
 
     ////////////////////////////// Speaker/Tones //////////////////////////////////
     /*
-     *  This function continues to play a sound on the speaker after the
-     * play_sound_file function is called. This function must be called often to
-     * playback the sound on the speaker.
-     */
-    void loop_speaker();
-
-    /*
      *  This function plays a sound on the speaker. The filename is a string
      * representing the name of the sound file to play. The return type is a boolean
      * value (true or false). True corresponds to the sound being played
@@ -111,8 +105,7 @@ class YBoardV3 {
     /* This is similar to the function above, except that it will start the song playing
      * in the background and return immediately. The song will continue to play in the
      * background until it is stopped with the stop_audio function, another song is
-     * played, play_notes is called, or the song finishes. After this function is called, the
-     * loop_speaker function must be called often to playback the sound on the speaker.
+     * played, play_notes is called, or the song finishes.
      */
     bool play_sound_file_background(const std::string &filename);
 
@@ -152,8 +145,6 @@ class YBoardV3 {
      * or the notes finish. If you call this function again before the notes finish, the
      * the new notes will be appended to the end of the current notes.  This allows you to
      * call this function multiple times to build up multiple sequences of notes to play.
-     * After this function is called, the loop_speaker function must be called often to
-     * playback the sound on the speaker.
      */
     bool play_notes_background(const std::string &new_notes);
 
@@ -166,6 +157,15 @@ class YBoardV3 {
      *  This function returns whether audio is playing.
      */
     bool is_audio_playing();
+
+    /*
+     * This function returns the speaker stream object which can be used to take
+     * control of the speaker, beyond playing a tone or a file, which this
+     * library already provides. This is an advanced function. To see what you
+     * can do with a speaker stream object, you can view
+     * https://github.com/pschatzmann/arduino-audio-tools.
+     */
+    I2SStream &get_speaker_stream();
 
     ////////////////////////////// Microphone ////////////////////////////////////////
     /*
@@ -192,6 +192,15 @@ class YBoardV3 {
      * an integer between 0 and 12. A volume of 0 is off, and a volume of 12 is full volume.
      */
     void set_recording_volume(uint8_t volume);
+
+    /*
+     * This function returns the microphone stream object which can be used to take
+     * control of the microphone, beyond recording to a file, which this
+     * library already provides. This is an advanced function. To see what you
+     * can do with a microphone stream object, you can view
+     * https://github.com/pschatzmann/arduino-audio-tools.
+     */
+    I2SStream &get_microphone_stream();
 
     ///////////////////////////// Accelerometer ////////////////////////////////////
     /*
@@ -246,10 +255,16 @@ class YBoardV3 {
     static constexpr int spi_miso_pin = 13;
     static constexpr int spi_sck_pin = 12;
 
-    // I2S Connections
-    static constexpr int i2s_dout_pin = 14;
-    static constexpr int i2s_bclk_pin = 21;
-    static constexpr int i2s_lrc_pin = 47;
+    // I2S Speaker Connections
+    static constexpr int speaker_i2s_data_pin = 14;
+    static constexpr int speaker_i2s_bclk_pin = 21;
+    static constexpr int speaker_i2s_ws_pin = 47;
+    static constexpr int speaker_i2s_port = 1;
+
+    // I2S Microphone Connections
+    static constexpr int mic_i2s_ws_pin = 41;
+    static constexpr int mic_i2s_data_pin = 40;
+    static constexpr int mic_i2s_port = 0;
 
   private:
     Adafruit_NeoPixel strip;

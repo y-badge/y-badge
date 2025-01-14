@@ -105,27 +105,14 @@ int YBoardV3::get_knob() {
 ////////////////////////////// Speaker/Tones //////////////////////////////////
 bool YBoardV3::setup_speaker() {
 
-    if (!YAudio::setup_speaker()) {
+    if (!YAudio::setup_speaker(speaker_i2s_ws_pin, speaker_i2s_bclk_pin, speaker_i2s_data_pin,
+                               speaker_i2s_port)) {
         Serial.println("ERROR: Speaker setup failed.");
         return false;
     }
 
-    // Set Volume
-    YAudio::set_wave_volume(5);
-
     return true;
 }
-
-bool YBoardV3::setup_mic() {
-    if (!YAudio::setup_mic()) {
-        Serial.println("ERROR: Mic setup failed.");
-        return false;
-    }
-
-    return true;
-}
-
-void YBoardV3::loop_speaker() { YAudio::loop(); }
 
 bool YBoardV3::play_sound_file(const std::string &filename) {
     if (!play_sound_file_background(filename)) {
@@ -133,7 +120,7 @@ bool YBoardV3::play_sound_file(const std::string &filename) {
     }
 
     while (is_audio_playing()) {
-        loop_speaker();
+        delay(10);
     }
 
     return true;
@@ -167,7 +154,7 @@ bool YBoardV3::play_notes(const std::string &notes) {
     }
 
     while (is_audio_playing()) {
-        loop_speaker();
+        delay(10);
     }
 
     return true;
@@ -179,7 +166,20 @@ void YBoardV3::stop_audio() { YAudio::stop_speaker(); }
 
 bool YBoardV3::is_audio_playing() { return YAudio::is_playing(); }
 
+I2SStream &YBoardV3::get_speaker_stream() { return YAudio::get_speaker_stream(); }
+
 ////////////////////////////// Microphone ////////////////////////////////////////
+bool YBoardV3::setup_mic() {
+    if (!YAudio::setup_mic(mic_i2s_ws_pin, mic_i2s_data_pin, mic_i2s_port)) {
+        Serial.println("ERROR: Mic setup failed.");
+        return false;
+    }
+
+    YAudio::set_recording_gain(10);
+
+    return true;
+}
+
 bool YBoardV3::start_recording(const std::string &filename) {
     // Prepend filename with a / if it doesn't have one
     std::string _filename = filename;
@@ -192,7 +192,7 @@ bool YBoardV3::start_recording(const std::string &filename) {
         return false;
     }
 
-    return YAudio::start_recording(filename);
+    return YAudio::start_recording(_filename);
 }
 
 void YBoardV3::stop_recording() { YAudio::stop_recording(); }
@@ -200,6 +200,8 @@ void YBoardV3::stop_recording() { YAudio::stop_recording(); }
 bool YBoardV3::is_recording() { return YAudio::is_recording(); }
 
 void YBoardV3::set_recording_volume(uint8_t volume) { YAudio::set_recording_gain(volume); }
+
+I2SStream &YBoardV3::get_microphone_stream() { return YAudio::get_mic_stream(); }
 
 ////////////////////////////// Accelerometer /////////////////////////////////////
 bool YBoardV3::setup_accelerometer() {

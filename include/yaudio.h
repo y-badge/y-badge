@@ -1,14 +1,16 @@
 #ifndef YAUDIO_H
 #define YAUDIO_H
 
+#include <AudioTools.h>
 #include <stdint.h>
 #include <string>
 
 namespace YAudio {
 
-bool setup_speaker();
-bool setup_mic();
-void loop();
+bool setup_speaker(int ws_pin, int bck_pin, int data_pin, int i2s_port);
+bool setup_mic(int ws_pin, int data_pin, int i2s_port);
+I2SStream &get_speaker_stream();
+I2SStream &get_mic_stream();
 void set_wave_volume(uint8_t volume);
 bool add_notes(const std::string &new_notes);
 void stop_speaker();
