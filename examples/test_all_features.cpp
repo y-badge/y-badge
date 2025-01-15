@@ -41,18 +41,4 @@ void loop() {
         Yboard.set_led_color(7, map(accel_data.y, -1000, 1000, 0, 255), 0, 0);
         Yboard.set_led_color(8, map(accel_data.z, -1000, 1000, 0, 255), 0, 0);
     }
-
-    temperature_data temp_data = Yboard.get_temperature();
-    if (temp_data.temperature > 28) {
-        Yboard.set_led_color(9, 255, 0, 0);
-    } else {
-        Yboard.set_led_color(9, 0, 0, 0);
-    }
-
-    if (temp_data.humidity > 50) {
-        Yboard.set_led_color(10, 255, 0, 0);
-    } else {
-        Yboard.set_led_color(10, 0, 0, 0);
-    }
-    // Serial.printf("temp: %f, humidity: %f\n", temp_data.temperature, temp_data.humidity);
 }

@@ -27,10 +27,6 @@ void YBoardV3::setup() {
         Serial.println("Accelerometer Setup: Success");
     }
 
-    if (setup_temperature()) {
-        Serial.println("Temperature Sensor Setup: Success");
-    }
-
     if (setup_display()) {
         Serial.println("Display Setup: Success");
     }
@@ -225,32 +221,6 @@ accelerometer_data YBoardV3::get_accelerometer() {
     data.x = accel.getX();
     data.y = accel.getY();
     data.z = accel.getZ();
-    return data;
-}
-
-// ////////////////////////////// Temperature /////////////////////////////////////
-bool YBoardV3::setup_temperature() {
-    if (!wire_begin) {
-        Wire.begin(sda_pin, scl_pin);
-        wire_begin = true;
-    }
-
-    if (!aht.begin(&Wire)) {
-        Serial.println("WARNING: Could not find temperature sensor.");
-        return false;
-    }
-
-    return true;
-}
-
-temperature_data YBoardV3::get_temperature() {
-    temperature_data data;
-    sensors_event_t h, t;
-    aht.getEvent(&h, &t);
-
-    data.temperature = t.temperature;
-    data.humidity = h.relative_humidity;
-
     return data;
 }
 
